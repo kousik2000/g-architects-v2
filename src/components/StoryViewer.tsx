@@ -1,0 +1,171 @@
+import { useState, useEffect, useRef } from "react"
+import { useAppStore } from "../store/appStore"
+import { X, ChevronLeft, ChevronRight, Play, Pause } from "lucide-react"
+
+interface StoryViewerProps {
+  onClose: () => void
+}
+
+export default function StoryViewer({ onClose }: StoryViewerProps) {
+  const { stories } = useAppStore()
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [progress, setProgress] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
+  const timerRef = useRef<any>(null)
+
+  const activeStory = stories[currentIndex]
+
+  useEffect(() => {
+    setProgress(0)
+  }, [currentIndex])
+
+  useEffect(() => {
+    if (isPaused || !activeStory) return
+
+    const interval = 50 // ms per step
+    const duration = 5000 // total time per story (5s)
+    const step = (interval / duration) * 100
+
+    timerRef.current = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(timerRef.current)
+          handleNext()
+          return 0
+        }
+        return prev + step
+      })
+    }, interval)
+
+    return () => clearInterval(timerRef.current)
+  }, [currentIndex, isPaused, stories])
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1)
+    } else {
+      setCurrentIndex(0)
+      setProgress(0)
+    }
+  }
+
+  const handleNext = () => {
+    if (currentIndex < stories.length - 1) {
+      setCurrentIndex((prev) => prev + 1)
+    } else {
+      onClose() // Close story viewer when finished all
+    }
+  }
+
+  if (stories.length === 0 || !activeStory) return null
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center select-none font-body">
+      {/* Background click handler */}
+      <div className="absolute inset-0" onClick={onClose} />
+
+      {/* Main container */}
+      <div className="relative w-full max-w-lg h-full sm:h-[85vh] sm:rounded-architectural overflow-hidden bg-primary shadow-2xl flex flex-col justify-between z-10">
+        
+        {/* Navigation tap zones */}
+        <div className="absolute top-20 bottom-16 left-0 w-1/3 z-20 cursor-w-resize" onClick={handlePrev} />
+        <div className="absolute top-20 bottom-16 right-0 w-1/3 z-20 cursor-e-resize" onClick={handleNext} />
+
+        {/* Top bar (Progress indicators and info) */}
+        <div className="absolute top-0 left-0 w-full p-4 bg-gradient-to-b from-black/80 to-transparent z-30">
+          
+          {/* Progress Bars */}
+          <div className="flex gap-1.5 mb-4">
+            {stories.map((_, idx) => (
+              <div key={idx} className="flex-1 h-[3px] bg-white/30 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-accent transition-all duration-75"
+                  style={{
+                    width:
+                      idx < currentIndex
+                        ? "100%"
+                        : idx === currentIndex
+                        ? `${progress}%`
+                        : "0%",
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Profile and time metadata */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold font-headings shadow-sm">
+                GA
+              </div>
+              <div>
+                <h4 className="text-white text-sm font-semibold tracking-wider">
+                  G Architects Live
+                </h4>
+                <p className="text-white/60 text-[10px]">
+                  Site Update #{currentIndex + 1}
+                </p>
+              </div>
+            </div>
+
+            {/* Top controls */}
+            <div className="flex items-center gap-3 text-white">
+              <button onClick={() => setIsPaused(!isPaused)} className="p-1.5 hover:text-accent transition-colors">
+                {isPaused ? <Play size={16} /> : <Pause size={16} />}
+              </button>
+              <button onClick={onClose} className="p-1.5 hover:text-accent transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Media display */}
+        <div className="flex-1 flex items-center justify-center bg-black">
+          {activeStory.mediaType === "video" ? (
+            <video
+              src={activeStory.mediaUrl}
+              autoPlay
+              muted
+              playsInline
+              className="max-h-full max-w-full object-contain"
+              onPlay={() => setIsPaused(false)}
+            />
+          ) : (
+            <img
+              src={activeStory.mediaUrl}
+              alt={activeStory.title}
+              className="max-h-full max-w-full object-contain pointer-events-none"
+            />
+          )}
+        </div>
+
+        {/* Bottom bar with narrative explanation */}
+        <div className="p-6 bg-gradient-to-t from-black/90 to-black/30 text-white z-30">
+          <h3 className="font-headings text-lg font-bold text-white mb-1">
+            {activeStory.title}
+          </h3>
+          <p className="text-xs text-white/80 font-light">
+            Live from construction grid. Updated recently.
+          </p>
+        </div>
+
+        {/* Left and Right Desktop Buttons */}
+        <button
+          onClick={handlePrev}
+          disabled={currentIndex === 0}
+          className="absolute -left-16 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors hidden lg:flex items-center justify-center disabled:opacity-30 disabled:pointer-events-none"
+        >
+          <ChevronLeft size={24} />
+        </button>
+        <button
+          onClick={handleNext}
+          className="absolute -right-16 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors hidden lg:flex items-center justify-center"
+        >
+          <ChevronRight size={24} />
+        </button>
+      </div>
+    </div>
+  )
+}

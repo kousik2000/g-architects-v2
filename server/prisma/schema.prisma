@@ -1,0 +1,202 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  password     String
+  name         String
+  role         String   @default("Admin") // "SuperAdmin" | "Admin"
+  refreshToken String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SiteSettings {
+  id             String   @id @default("global-settings")
+  heroTitle      String   @default("CRAFTING SPATIAL TRANSFORMATIONS")
+  heroSubtitle   String   @default("Modern architectural studio shaping sustainable & luxurious environments.")
+  aboutTitle     String   @default("OUR JOURNEY")
+  aboutContent   String   @default("Founded with a vision of bridging organic curves and functional geometries, G Architects has evolved from a boutique atelier to an award-winning spatial design laboratory. We reject typical box structures in favor of fluid forms, sculptural lines, and passive climate responsive architectural engineering.")
+  contactPhone   String   @default("+91 98765 43210")
+  contactEmail   String   @default("info@garchitects.com")
+  officeAddress  String   @default("102, Design District, Sector 5, Salt Lake, Kolkata, West Bengal, India")
+  socialMedia    String   @default("{\"twitter\":\"https://twitter.com\",\"instagram\":\"https://instagram.com\",\"linkedin\":\"https://linkedin.com\"}") // JSON string
+  footerContent  String   @default("© 2026 G Architects & Developers. All rights reserved.")
+  updatedAt      DateTime @updatedAt
+}
+
+model ProjectCategory {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  slug        String    @unique
+  projects    Project[]
+  createdAt   DateTime  @default(now())
+}
+
+model Tag {
+  id        String       @id @default(uuid())
+  name      String       @unique
+  projects  ProjectTag[]
+  createdAt DateTime     @default(now())
+}
+
+model ProjectTag {
+  projectId String
+  tagId     String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, tagId])
+}
+
+model Project {
+  id               String           @id @default(uuid())
+  slug             String           @unique
+  title            String
+  description      String
+  categoryId       String
+  category         ProjectCategory  @relation(fields: [categoryId], references: [id])
+  projectType      String           // "Villa", "Apartment", "Office", etc.
+  location         String
+  area             String           // e.g. "4,500 sq ft"
+  status           String           // "CONCEPT" | "DESIGN" | "APPROVAL" | "CONSTRUCTION" | "COMPLETED"
+  projectStartDate DateTime         @default(now())
+  completionDate   DateTime
+  coverImage       String
+  beforeImage      String?
+  afterImage       String?
+  siteArea         String?
+  builtArea        String?
+  floors           Int?             @default(1)
+  budgetRange      String?
+  storyTitle       String?
+  storyProcess     String?
+  storyChallenge   String?
+  storySolution    String?
+  featured         Boolean          @default(false)
+  featuredOrder    Int              @default(0)
+  
+  // SEO fields
+  metaTitle        String?
+  metaDescription  String?
+  metaKeywords     String?
+  ogImage          String?
+  
+  // Soft Delete
+  deletedAt        DateTime?
+  
+  gallery          ProjectGallery[]
+  drawings         ProjectDrawing[]
+  reviews          Review[]
+  tags             ProjectTag[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+}
+
+model ProjectGallery {
+  id           String   @id @default(uuid())
+  imageUrl     String
+  displayOrder Int      @default(0)
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+}
+
+model ProjectDrawing {
+  id           String   @id @default(uuid())
+  title        String
+  drawingType  String   // "Floor Plan" | "Elevation" | "Section" | "Working Drawing"
+  fileUrl      String
+  displayOrder Int      @default(0)
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+}
+
+model TeamMember {
+  id           String   @id @default(uuid())
+  name         String
+  designation  String
+  bio          String
+  profileImage String
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+model Review {
+  id               String    @id @default(uuid())
+  clientName       String
+  clientPhoto      String?
+  rating           Int       @default(5)
+  review           String
+  projectId        String?
+  project          Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+}
+
+model Activity {
+  id           String   @id @default(uuid())
+  title        String
+  mediaUrl     String
+  thumbnailUrl String?
+  mediaType    String   @default("image") // "image" | "video"
+  displayOrder Int      @default(0)
+  expiryDate   DateTime
+  createdAt    DateTime @default(now())
+}
+
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  startDate DateTime
+  endDate   DateTime
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Partner {
+  id          String    @id @default(uuid())
+  name        String
+  logo        String
+  website     String?
+  description String?
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model ContactLead {
+  id            String    @id @default(uuid())
+  name          String
+  phone         String
+  email         String
+  projectType   String
+  serviceType   String    @default("Architectural Planning")
+  budget        String
+  message       String
+  attachmentUrl String?
+  status        String    @default("New") // "New" | "Contacted" | "Closed"
+  source        String    @default("Website Form")
+  notes         String?
+  assignedTo    String?
+  followUpDate  DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+model MediaAsset {
+  id        String   @id @default(uuid())
+  filename  String
+  filePath  String
+  fileType  String
+  fileSize  Int
+  createdAt DateTime @default(now())
+}
