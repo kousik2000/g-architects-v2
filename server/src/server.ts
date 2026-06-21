@@ -1260,7 +1260,15 @@ app.get("/api/admin/metrics", authenticateToken, async (req: any, res: any) => {
   }
 })
 
-// --- Server Boot ---
-app.listen(PORT, () => {
-  console.log(`Backend server running on http://localhost:${PORT}`)
-})
+
+// --- Export for Vercel Serverless ---
+export default app
+
+// --- Local Dev Server Boot ---
+// Only start listening when running directly (not on Vercel)
+if (process.env.VERCEL !== "1") {
+  app.listen(PORT, () => {
+    console.log(`Backend server running on http://localhost:${PORT}`)
+  })
+}
+

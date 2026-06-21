@@ -7,9 +7,7 @@
       "config": {
         "includeFiles": [
           "src/replyemail.html",
-          "prisma/schema.prisma",
-          "node_modules/.prisma/**",
-          "node_modules/@prisma/client/**"
+          "prisma/schema.prisma"
         ]
       }
     }
