@@ -5,19 +5,25 @@ import { X, Megaphone, Calendar } from "lucide-react"
 export default function NewsPopup() {
   const { announcements, fetchAnnouncements } = useAppStore()
   const [activePopup, setActivePopup] = useState<any | null>(null)
+  const [visible, setVisible] = useState(false)
 
   useEffect(() => {
     fetchAnnouncements()
   }, [])
 
   useEffect(() => {
-    if (announcements.length > 0) {
-      // Find the most recent active announcement
-      const current = announcements[0]
-      const dismissed = localStorage.getItem(`g_news_dismissed_${current.id}`)
-
-      if (!dismissed) {
-        setActivePopup(current)
+    if (announcements && announcements.length > 0) {
+      // Find the first non-dismissed active announcement
+      const undismissed = announcements.find(
+        (a: any) => !localStorage.getItem(`g_news_dismissed_${a.id}`)
+      )
+      if (undismissed) {
+        // Small delay before showing popup for better UX
+        const t = setTimeout(() => {
+          setActivePopup(undismissed)
+          setVisible(true)
+        }, 1500)
+        return () => clearTimeout(t)
       }
     }
   }, [announcements])
@@ -25,47 +31,60 @@ export default function NewsPopup() {
   const handleDismiss = () => {
     if (activePopup) {
       localStorage.setItem(`g_news_dismissed_${activePopup.id}`, "true")
-      setActivePopup(null)
+      setVisible(false)
+      setTimeout(() => setActivePopup(null), 300)
     }
   }
 
   if (!activePopup) return null
 
+  // Format end date nicely
+  const endDateStr = activePopup.endDate
+    ? new Date(activePopup.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
+    : null
+
   return (
-    <div className="fixed bottom-6 left-6 z-40 max-w-md w-full animate-fadeIn font-body">
-      <div className="bg-primary text-white border border-white/10 shadow-2xl p-6 rounded-architectural relative overflow-hidden">
-        {/* Architectural grid styling in background */}
-        <div className="absolute top-0 right-0 w-24 h-24 border-b border-l border-white/5 pointer-events-none" />
-        
+    <div
+      className={`fixed bottom-6 left-6 z-40 max-w-sm w-full font-body transition-all duration-300 ${
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+      }`}
+    >
+      <div className="bg-primary text-white border border-white/10 shadow-2xl p-5 rounded-architectural relative overflow-hidden">
+        {/* Decorative corner accent */}
+        <div className="absolute top-0 right-0 w-20 h-20 border-b border-l border-white/5 pointer-events-none rounded-bl-3xl" />
+        <div className="absolute bottom-0 left-0 w-12 h-12 border-t border-r border-accent/10 pointer-events-none rounded-tr-3xl" />
+
         {/* Dismiss Button */}
         <button
           onClick={handleDismiss}
-          className="absolute top-4 right-4 text-white/60 hover:text-accent transition-colors"
+          className="absolute top-3 right-3 p-1 text-white/50 hover:text-accent transition-colors rounded"
           aria-label="Dismiss Announcement"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
 
         {/* Content */}
-        <div className="flex gap-4 items-start">
-          <div className="p-3 bg-accent rounded-architectural text-white flex items-center justify-center shrink-0">
-            <Megaphone size={18} />
+        <div className="flex gap-3 items-start">
+          <div className="p-2.5 bg-accent/20 rounded-lg text-accent flex items-center justify-center shrink-0 mt-0.5">
+            <Megaphone size={16} />
           </div>
-          <div>
-            <span className="text-[10px] text-accent font-bold uppercase tracking-widest font-headings mb-1 block">
-              Announcements & News
+          <div className="min-w-0">
+            <span className="text-[9px] text-accent font-bold uppercase tracking-widest font-headings mb-1 block">
+              Announcement
             </span>
-            <h3 className="font-headings text-md font-bold tracking-wide leading-snug mb-2 text-white">
+            <h3 className="font-headings text-sm font-bold tracking-wide leading-snug mb-1.5 text-white pr-4">
               {activePopup.title}
             </h3>
-            <p className="text-white/80 text-xs leading-relaxed font-light mb-4">
+            <p className="text-white/70 text-[11px] leading-relaxed font-light mb-3">
               {activePopup.content}
             </p>
-            
-            <div className="flex items-center gap-2 text-white/50 text-[10px]">
-              <Calendar size={12} />
-              <span>Valid this month at Gautam Sen Studio</span>
-            </div>
+
+            {endDateStr && (
+              <div className="flex items-center gap-1.5 text-white/40 text-[10px]">
+                <Calendar size={10} />
+                <span>Valid until {endDateStr}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

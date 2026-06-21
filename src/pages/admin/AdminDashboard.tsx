@@ -1522,12 +1522,24 @@ export default function AdminDashboard() {
           <div className="space-y-6 animate-fadeIn">
             <div className="flex justify-between items-center bg-[#1A1A1A] p-4 rounded-architectural border border-white/5">
               <span className="text-xs font-semibold text-mutedText">Post announcements that popup on page entry for consumers.</span>
-              <button
-                onClick={openCreateNews}
-                className="px-4 py-2 bg-accent text-white uppercase text-xs font-bold tracking-widest rounded flex items-center gap-1.5"
-              >
-                <Plus size={14} /> Add Announcement
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    // Clear all dismissed announcement flags so they reappear on site
+                    Object.keys(localStorage).filter(k => k.startsWith("g_news_dismissed_")).forEach(k => localStorage.removeItem(k))
+                    alert("Dismissed flags cleared. Reload the homepage to see the popup.")
+                  }}
+                  className="px-3 py-2 border border-white/20 text-white uppercase text-[10px] font-bold tracking-widest rounded hover:bg-white/10 transition-colors"
+                >
+                  Preview on Site
+                </button>
+                <button
+                  onClick={openCreateNews}
+                  className="px-4 py-2 bg-accent text-white uppercase text-xs font-bold tracking-widest rounded flex items-center gap-1.5"
+                >
+                  <Plus size={14} /> Add Announcement
+                </button>
+              </div>
             </div>
 
             <div className="bg-[#1A1A1A] border border-white/5 rounded-architectural overflow-hidden">
@@ -1568,6 +1580,85 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+      {/* =========================================================
+          OVERLAY MODAL: ANNOUNCEMENT CREATE / EDIT
+          ========================================================= */}
+      {newsModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm p-4 flex items-center justify-center">
+          <div className="absolute inset-0" onClick={() => setNewsModalOpen(false)} />
+          <div className="relative bg-[#1A1A1A] border border-white/10 rounded-architectural max-w-lg w-full shadow-2xl z-10">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+              <h3 className="font-headings text-sm font-bold text-white uppercase">
+                {editingNewsId ? "Edit Announcement" : "New Announcement"}
+              </h3>
+              <button onClick={() => setNewsModalOpen(false)} className="p-1.5 text-mutedText hover:text-white hover:bg-white/10 rounded transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveNews} className="p-6 space-y-4 text-xs text-white">
+              <div>
+                <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Announcement Title</label>
+                <input
+                  type="text" required value={newsTitle} onChange={(e) => setNewsTitle(e.target.value)}
+                  className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+                  placeholder="e.g. New Project Launch — Villa Horizon"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Content / Body Text</label>
+                <textarea
+                  rows={4} required value={newsContent} onChange={(e) => setNewsContent(e.target.value)}
+                  className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent resize-none"
+                  placeholder="Describe the announcement. This will appear in the popup on the homepage."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Start Date</label>
+                  <input
+                    type="date" required value={newsStart} onChange={(e) => setNewsStart(e.target.value)}
+                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">End Date</label>
+                  <input
+                    type="date" required value={newsEnd} onChange={(e) => setNewsEnd(e.target.value)}
+                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-t border-white/10">
+                <span className="text-xs font-medium text-white">Mark as Active (shows on website)</span>
+                <button
+                  type="button"
+                  onClick={() => setNewsActive(!newsActive)}
+                  className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${newsActive ? "bg-accent" : "bg-white/20"}`}
+                >
+                  <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${newsActive ? "translate-x-6" : "translate-x-0"}`} />
+                </button>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setNewsModalOpen(false)}
+                  className="px-4 py-2 bg-white/5 border border-white/5 hover:bg-white/10 text-white rounded text-[10px] font-bold uppercase">
+                  Cancel
+                </button>
+                <button type="submit" className="px-5 py-2 bg-accent text-white rounded text-[10px] font-bold uppercase tracking-wider">
+                  {editingNewsId ? "Update Announcement" : "Publish Announcement"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
         {/* =========================================================
             TAB CONTENT: PARTNERS
