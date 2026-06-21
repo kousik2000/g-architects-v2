@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { Link } from "react-router-dom"
 import {
   Sparkles,
@@ -12,6 +13,42 @@ import {
 } from "lucide-react"
 
 export default function ServicesPage() {
+  useEffect(() => {
+    // Track services page view
+    fetch("/api/analytics/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: "/services" }),
+    }).catch((e) => console.error("Analytics tracking failed:", e))
+  }, [])
+
+  useEffect(() => {
+    const handleHashScroll = () => {
+      const hash = window.location.hash
+      if (hash) {
+        const id = hash.replace("#", "")
+        const element = document.getElementById(id)
+        if (element) {
+          setTimeout(() => {
+            element.scrollIntoView({ behavior: "smooth", block: "center" })
+            // Add a temporary subtle highlight border/glow to make the card stand out
+            element.classList.add("border-accent", "ring-2", "ring-accent/20")
+            setTimeout(() => {
+              element.classList.remove("border-accent", "ring-2", "ring-accent/20")
+            }, 2000)
+          }, 100)
+        }
+      }
+    }
+
+    // Scroll on mount / url change
+    handleHashScroll()
+
+    // Listen to hashchange events
+    window.addEventListener("hashchange", handleHashScroll)
+    return () => window.removeEventListener("hashchange", handleHashScroll)
+  }, [])
+
   const serviceList = [
     {
       id: "architectural-planning",
@@ -95,6 +132,7 @@ export default function ServicesPage() {
           {serviceList.map((srv, idx) => (
             <div
               key={srv.id}
+              id={srv.id}
               className="bg-white border border-borderLine rounded-architectural p-8 shadow-architectural grid grid-cols-1 lg:grid-cols-12 gap-8 items-start hover:border-accent transition-colors duration-300"
             >
               {/* Left Column (Info) */}

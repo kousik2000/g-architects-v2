@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { useAuthStore, useAppStore } from "../../store/appStore"
+import { useAuthStore, useAppStore, convertGoogleDriveUrl } from "../../store/appStore"
 import {
   LayoutDashboard,
   Layers,
@@ -36,7 +36,7 @@ export default function AdminDashboard() {
     reviews, fetchReviews, createReview, updateReview, archiveReview, restoreReview, deleteReview,
     stories, fetchStories, createStory, deleteStory,
     announcements, fetchAdminAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement,
-    leads, fetchLeads, updateLeadStatus,
+    leads, fetchLeads, updateLeadStatus, deleteLead,
     settings, fetchSettings, updateSettings,
     metrics, fetchMetrics,
     partners, fetchPartners, createPartner, archivePartner, restorePartner, deletePartner,
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
   // --- Projects Edit Modal State ---
   const [projectModalOpen, setProjectModalOpen] = useState(false)
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null)
-  
+
   // Project Form Fields
   const [pTitle, setPTitle] = useState("")
   const [pDescription, setPDescription] = useState("")
@@ -160,10 +160,10 @@ export default function AdminDashboard() {
   const [pStorySolution, setPStorySolution] = useState("")
   const [pFeatured, setPFeatured] = useState(false)
   const [pFeaturedOrder, setPFeaturedOrder] = useState(0)
-  
+
   // Project tags selection
   const [pTags, setPTags] = useState<string[]>([]) // array of tag IDs
-  
+
   // Gallery URLs reordering
   const [pGallery, setPGallery] = useState<string[]>([])
   const [newGalleryUrl, setNewGalleryUrl] = useState("")
@@ -233,17 +233,17 @@ export default function AdminDashboard() {
     setPStorySolution(proj.storySolution || "")
     setPFeatured(proj.featured)
     setPFeaturedOrder(proj.featuredOrder)
-    
+
     // Set selected tag IDs
     setPTags(proj.tags?.map((t: any) => t.tagId) || [])
-    
+
     // Set gallery URLs
     setPGallery(proj.gallery?.map((g: any) => g.imageUrl) || [])
-    
+
     // Set drawings
     setPDrawings(proj.drawings || [])
     setDriveFolderUrl("")
-    
+
     setProjectModalOpen(true)
   }
 
@@ -359,7 +359,7 @@ export default function AdminDashboard() {
   const [catName, setCatName] = useState("")
   const [catDesc, setCatDesc] = useState("")
   const [editingCatId, setEditingCatId] = useState<string | null>(null)
-  
+
   const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!catName) return
@@ -608,6 +608,16 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleDeleteLeadPermanently = async (id: string) => {
+    if (!confirm("Are you sure you want to permanently delete this customer inquiry? This action cannot be undone.")) return
+    const success = await deleteLead(id)
+    if (success) {
+      alert("Inquiry deleted successfully.")
+    } else {
+      alert("Failed to delete inquiry.")
+    }
+  }
+
   // --- Site CMS Settings State ---
   const [sHeroTitle, setSHeroTitle] = useState("")
   const [sHeroSubtitle, setSHeroSubtitle] = useState("")
@@ -699,10 +709,18 @@ export default function AdminDashboard() {
         <div>
           {/* Logo / Header */}
           <div className="p-6 border-b border-white/5">
-            <h3 className="font-headings text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
-              G<span className="text-accent">.</span>ARCHITECTS
-            </h3>
-            <span className="text-[8px] uppercase tracking-wider text-mutedText block mt-1 font-semibold">
+            <div className="flex items-center gap-1.5 shrink-0 mb-1">
+              <img src="/src/store/logov1-g.png" className="h-[32px] object-contain mr-[2px]" />
+              <span className="text-accent text-lg font-extrabold mb-[-4px]">.</span>
+              <div className="flex flex-col text-[10px] font-headings font-extrabold leading-none text-white tracking-tight">
+                <div className="flex gap-1 items-center">
+                  <span>ARCHITECTS</span>
+                  <span className="text-accent">&</span>
+                </div>
+                <span>DEVELOPERS</span>
+              </div>
+            </div>
+            <span className="text-[8px] uppercase tracking-wider text-mutedText block mt-2 font-semibold">
               Admin Control Panel
             </span>
           </div>
@@ -713,11 +731,10 @@ export default function AdminDashboard() {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-architectural text-xs font-semibold tracking-wide transition-all ${
-                  activeTab === item.id
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-architectural text-xs font-semibold tracking-wide transition-all ${activeTab === item.id
                     ? "bg-accent text-white"
                     : "text-mutedText hover:text-white hover:bg-white/5"
-                }`}
+                  }`}
               >
                 {item.icon}
                 <span>{item.label}</span>
@@ -803,22 +820,28 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-4 gap-6 text-center border-b border-white/5 pb-6 mb-6">
                 <div>
                   <span className="text-mutedText text-[10px] uppercase font-bold tracking-wider block">Website Visits (Month)</span>
-                  <strong className="text-xl font-headings text-white mt-1 block">4,280</strong>
+                  <strong className="text-xl font-headings text-white mt-1 block">
+                    {metrics?.websiteVisits !== undefined ? metrics.websiteVisits : "..."}
+                  </strong>
                 </div>
                 <div>
                   <span className="text-mutedText text-[10px] uppercase font-bold tracking-wider block">Lead Conversion Rate</span>
-                  <strong className="text-xl font-headings text-accent mt-1 block">2.4%</strong>
+                  <strong className="text-xl font-headings text-accent mt-1 block">
+                    {metrics?.conversionRate !== undefined ? `${metrics.conversionRate}%` : "..."}
+                  </strong>
                 </div>
                 <div>
                   <span className="text-mutedText text-[10px] uppercase font-bold tracking-wider block">Most Visited Project</span>
-                  <strong className="text-sm font-headings text-white mt-2 block truncate">VILLA HORIZON</strong>
+                  <strong className="text-sm font-headings text-white mt-2 block truncate" title={metrics?.mostVisitedProject || "NONE"}>
+                    {metrics?.mostVisitedProject || "NONE"}
+                  </strong>
                 </div>
                 <div>
                   <span className="text-mutedText text-[10px] uppercase font-bold tracking-wider block">Active Story Engagements</span>
                   <strong className="text-xl font-headings text-white mt-1 block">340 Views</strong>
                 </div>
               </div>
-              
+
               {/* Fake coordinate line representing charts */}
               <div className="h-[120px] bg-[#111111] rounded-architectural border border-white/5 flex items-center justify-center relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10 flex flex-col justify-between p-2">
@@ -856,9 +879,8 @@ export default function AdminDashboard() {
                           <td className="py-2.5">{l.serviceType}</td>
                           <td className="py-2.5">{l.budget}</td>
                           <td className="py-2.5">
-                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
-                              l.status === "New" ? "bg-accent/15 text-accent" : "bg-white/10 text-mutedText"
-                            }`}>
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${l.status === "New" ? "bg-accent/15 text-accent" : "bg-white/10 text-mutedText"
+                              }`}>
                               {l.status}
                             </span>
                           </td>
@@ -1041,7 +1063,7 @@ export default function AdminDashboard() {
               <h3 className="font-headings text-xs font-bold uppercase tracking-widest text-white border-b border-white/10 pb-3">
                 Project Categories
               </h3>
-              
+
               <form onSubmit={handleSaveCategory} className="space-y-4">
                 <div>
                   <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Category Name</label>
@@ -1157,7 +1179,7 @@ export default function AdminDashboard() {
               <h3 className="font-headings text-xs font-bold uppercase tracking-widest text-white mb-4">
                 Upload New Image/Drawing/Video
               </h3>
-              
+
               <div className="border-2 border-dashed border-white/10 rounded-architectural p-8 text-center bg-[#111111] relative hover:border-accent transition-colors">
                 <input
                   type="file"
@@ -1295,12 +1317,18 @@ export default function AdminDashboard() {
                           <option>Closed</option>
                         </select>
                       </td>
-                      <td className="p-4 text-right">
+                      <td className="p-4 text-right space-x-2">
                         <button
                           onClick={() => openLeadDetail(lead)}
                           className="px-3 py-1.5 bg-white/5 hover:bg-accent text-white font-bold uppercase tracking-wider rounded text-[10px] transition-colors"
                         >
                           Details
+                        </button>
+                        <button
+                          onClick={() => handleDeleteLeadPermanently(lead.id)}
+                          className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white font-bold uppercase tracking-wider rounded text-[10px] transition-colors"
+                        >
+                          Delete
                         </button>
                       </td>
                     </tr>
@@ -1429,7 +1457,7 @@ export default function AdminDashboard() {
                         >
                           Edit
                         </button>
-                        
+
                         {rev.deletedAt ? (
                           <button
                             onClick={async () => {
@@ -1498,13 +1526,13 @@ export default function AdminDashboard() {
                     type="text"
                     required
                     value={storyMediaUrl}
-                    onChange={(e) => setStoryMediaUrl(e.target.value)}
+                    onChange={(e) => setStoryMediaUrl(convertGoogleDriveUrl(e.target.value))}
                     className="w-full bg-[#111111] border border-white/10 text-xs rounded px-3 py-2 text-white font-mono"
                     placeholder="e.g. /uploads/concrete.jpg"
                   />
                   <span className="text-[8px] text-mutedText mt-1 block">Copy this from the Media Library tab.</span>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Media Type</label>
@@ -1542,7 +1570,7 @@ export default function AdminDashboard() {
               <h3 className="font-headings text-xs font-bold uppercase tracking-widest text-white border-b border-white/10 pb-3">
                 Live Stories (Expiring in 24-72h)
               </h3>
-              
+
               <div className="divide-y divide-white/5">
                 {stories.map((story) => (
                   <div key={story.id} className="py-3 flex items-center justify-between text-xs">
@@ -1636,144 +1664,144 @@ export default function AdminDashboard() {
           </div>
         )}
 
-      {/* =========================================================
+        {/* =========================================================
           OVERLAY MODAL: ANNOUNCEMENT CREATE / EDIT
           ========================================================= */}
-      {newsModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm p-4 flex items-center justify-center">
-          <div className="absolute inset-0" onClick={() => setNewsModalOpen(false)} />
-          <div className="relative bg-[#1A1A1A] border border-white/10 rounded-architectural max-w-lg w-full shadow-2xl z-10 flex flex-col" style={{ maxHeight: "90vh" }}>
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
-              <h3 className="font-headings text-sm font-bold text-white uppercase">
-                {editingNewsId ? "Edit Announcement" : "New Announcement"}
-              </h3>
-              <button onClick={() => setNewsModalOpen(false)} className="p-1.5 text-mutedText hover:text-white hover:bg-white/10 rounded transition-colors">
-                <X size={18} />
-              </button>
-            </div>
+        {newsModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm p-4 flex items-center justify-center">
+            <div className="absolute inset-0" onClick={() => setNewsModalOpen(false)} />
+            <div className="relative bg-[#1A1A1A] border border-white/10 rounded-architectural max-w-lg w-full shadow-2xl z-10 flex flex-col" style={{ maxHeight: "90vh" }}>
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+                <h3 className="font-headings text-sm font-bold text-white uppercase">
+                  {editingNewsId ? "Edit Announcement" : "New Announcement"}
+                </h3>
+                <button onClick={() => setNewsModalOpen(false)} className="p-1.5 text-mutedText hover:text-white hover:bg-white/10 rounded transition-colors">
+                  <X size={18} />
+                </button>
+              </div>
 
-            {/* Scrollable Form */}
-            <div className="overflow-y-auto flex-grow">
-              <form id="news-form" onSubmit={handleSaveNews} className="p-6 space-y-5 text-xs text-white">
+              {/* Scrollable Form */}
+              <div className="overflow-y-auto flex-grow">
+                <form id="news-form" onSubmit={handleSaveNews} className="p-6 space-y-5 text-xs text-white">
 
-                {/* Title */}
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Announcement Title *</label>
-                  <input
-                    type="text" required value={newsTitle} onChange={(e) => setNewsTitle(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
-                    placeholder="e.g. New Project Launch — Villa Horizon"
-                  />
-                </div>
-
-                {/* Content */}
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Content / Body Text *</label>
-                  <textarea
-                    rows={3} required value={newsContent} onChange={(e) => setNewsContent(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent resize-none"
-                    placeholder="Describe the announcement. This appears in the popup on the homepage."
-                  />
-                </div>
-
-                {/* Dates */}
-                <div className="grid grid-cols-2 gap-4">
+                  {/* Title */}
                   <div>
-                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Start Date *</label>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Announcement Title *</label>
                     <input
-                      type="date" required value={newsStart} onChange={(e) => setNewsStart(e.target.value)}
+                      type="text" required value={newsTitle} onChange={(e) => setNewsTitle(e.target.value)}
                       className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+                      placeholder="e.g. New Project Launch — Villa Horizon"
                     />
                   </div>
+
+                  {/* Content */}
                   <div>
-                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">End Date *</label>
-                    <input
-                      type="date" required value={newsEnd} onChange={(e) => setNewsEnd(e.target.value)}
-                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Content / Body Text *</label>
+                    <textarea
+                      rows={3} required value={newsContent} onChange={(e) => setNewsContent(e.target.value)}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent resize-none"
+                      placeholder="Describe the announcement. This appears in the popup on the homepage."
                     />
                   </div>
-                </div>
 
-                {/* Divider */}
-                <div className="border-t border-white/10 pt-4">
-                  <p className="text-[10px] text-mutedText uppercase font-bold tracking-wider mb-4">Optional Enhancements</p>
+                  {/* Dates */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Start Date *</label>
+                      <input
+                        type="date" required value={newsStart} onChange={(e) => setNewsStart(e.target.value)}
+                        className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">End Date *</label>
+                      <input
+                        type="date" required value={newsEnd} onChange={(e) => setNewsEnd(e.target.value)}
+                        className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+                      />
+                    </div>
+                  </div>
 
-                  {/* Banner Image URL */}
-                  <div className="mb-4">
-                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Banner Image URL</label>
-                    <input
-                      type="url" value={newsImageUrl} onChange={(e) => setNewsImageUrl(e.target.value)}
-                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white font-mono text-[10px] focus:outline-none focus:border-accent"
-                      placeholder="https://... or /uploads/..."
-                    />
-                    {newsImageUrl && (
-                      <div className="mt-2 rounded overflow-hidden border border-white/10 h-24">
-                        <img src={newsImageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e: any) => { e.target.style.display = "none" }} />
+                  {/* Divider */}
+                  <div className="border-t border-white/10 pt-4">
+                    <p className="text-[10px] text-mutedText uppercase font-bold tracking-wider mb-4">Optional Enhancements</p>
+
+                    {/* Banner Image URL */}
+                    <div className="mb-4">
+                      <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Banner Image URL</label>
+                      <input
+                        type="url" value={newsImageUrl} onChange={(e) => setNewsImageUrl(convertGoogleDriveUrl(e.target.value))}
+                        className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white font-mono text-[10px] focus:outline-none focus:border-accent"
+                        placeholder="https://... or /uploads/..."
+                      />
+                      {newsImageUrl && (
+                        <div className="mt-2 rounded overflow-hidden border border-white/10 h-24">
+                          <img src={newsImageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e: any) => { e.target.style.display = "none" }} />
+                        </div>
+                      )}
+                      <p className="text-[9px] text-white/30 mt-1">Displayed as a full-width banner at top of popup.</p>
+                    </div>
+
+                    {/* Project Link */}
+                    <div className="mb-4">
+                      <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Link to Project (CTA Button)</label>
+                      <select
+                        value={newsProjectId} onChange={(e) => { setNewsProjectId(e.target.value); if (e.target.value) setNewsExternalLink("") }}
+                        className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+                      >
+                        <option value="">— No Project —</option>
+                        {projects.filter(p => !p.deletedAt).map((p: any) => (
+                          <option key={p.id} value={p.id}>{p.title}</option>
+                        ))}
+                      </select>
+                      <p className="text-[9px] text-white/30 mt-1">Adds a "View Project" button that redirects to the project detail page.</p>
+                    </div>
+
+                    {/* External Link — only show if no project selected */}
+                    {!newsProjectId && (
+                      <div className="mb-4">
+                        <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">External Link / Download URL</label>
+                        <input
+                          type="url" value={newsExternalLink} onChange={(e) => setNewsExternalLink(e.target.value)}
+                          className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white font-mono text-[10px] focus:outline-none focus:border-accent"
+                          placeholder="https://... (brochure, form, etc.)"
+                        />
+                        <p className="text-[9px] text-white/30 mt-1">Adds an "Open Link" button (opens in new tab). Used if no project is linked.</p>
                       </div>
                     )}
-                    <p className="text-[9px] text-white/30 mt-1">Displayed as a full-width banner at top of popup.</p>
                   </div>
 
-                  {/* Project Link */}
-                  <div className="mb-4">
-                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Link to Project (CTA Button)</label>
-                    <select
-                      value={newsProjectId} onChange={(e) => { setNewsProjectId(e.target.value); if (e.target.value) setNewsExternalLink("") }}
-                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
-                    >
-                      <option value="">— No Project —</option>
-                      {projects.filter(p => !p.deletedAt).map((p: any) => (
-                        <option key={p.id} value={p.id}>{p.title}</option>
-                      ))}
-                    </select>
-                    <p className="text-[9px] text-white/30 mt-1">Adds a "View Project" button that redirects to the project detail page.</p>
-                  </div>
-
-                  {/* External Link — only show if no project selected */}
-                  {!newsProjectId && (
-                    <div className="mb-4">
-                      <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">External Link / Download URL</label>
-                      <input
-                        type="url" value={newsExternalLink} onChange={(e) => setNewsExternalLink(e.target.value)}
-                        className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white font-mono text-[10px] focus:outline-none focus:border-accent"
-                        placeholder="https://... (brochure, form, etc.)"
-                      />
-                      <p className="text-[9px] text-white/30 mt-1">Adds an "Open Link" button (opens in new tab). Used if no project is linked.</p>
+                  {/* Active Toggle */}
+                  <div className="flex items-center justify-between py-3 border-t border-white/10">
+                    <div>
+                      <span className="text-xs font-medium text-white block">Mark as Active</span>
+                      <span className="text-[9px] text-white/40">Shows on website within date range</span>
                     </div>
-                  )}
-                </div>
-
-                {/* Active Toggle */}
-                <div className="flex items-center justify-between py-3 border-t border-white/10">
-                  <div>
-                    <span className="text-xs font-medium text-white block">Mark as Active</span>
-                    <span className="text-[9px] text-white/40">Shows on website within date range</span>
+                    <button
+                      type="button" onClick={() => setNewsActive(!newsActive)}
+                      className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${newsActive ? "bg-accent" : "bg-white/20"}`}
+                    >
+                      <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${newsActive ? "translate-x-6" : "translate-x-0"}`} />
+                    </button>
                   </div>
-                  <button
-                    type="button" onClick={() => setNewsActive(!newsActive)}
-                    className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${newsActive ? "bg-accent" : "bg-white/20"}`}
-                  >
-                    <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${newsActive ? "translate-x-6" : "translate-x-0"}`} />
-                  </button>
-                </div>
 
-              </form>
-            </div>
+                </form>
+              </div>
 
-            {/* Sticky Footer */}
-            <div className="flex justify-end gap-3 px-6 py-4 border-t border-white/10 shrink-0 bg-[#1A1A1A]">
-              <button type="button" onClick={() => setNewsModalOpen(false)}
-                className="px-4 py-2 bg-white/5 border border-white/5 hover:bg-white/10 text-white rounded text-[10px] font-bold uppercase">
-                Cancel
-              </button>
-              <button type="submit" form="news-form" className="px-5 py-2 bg-accent text-white rounded text-[10px] font-bold uppercase tracking-wider">
-                {editingNewsId ? "Update Announcement" : "Publish Announcement"}
-              </button>
+              {/* Sticky Footer */}
+              <div className="flex justify-end gap-3 px-6 py-4 border-t border-white/10 shrink-0 bg-[#1A1A1A]">
+                <button type="button" onClick={() => setNewsModalOpen(false)}
+                  className="px-4 py-2 bg-white/5 border border-white/5 hover:bg-white/10 text-white rounded text-[10px] font-bold uppercase">
+                  Cancel
+                </button>
+                <button type="submit" form="news-form" className="px-5 py-2 bg-accent text-white rounded text-[10px] font-bold uppercase tracking-wider">
+                  {editingNewsId ? "Update Announcement" : "Publish Announcement"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
         {/* =========================================================
             TAB CONTENT: PARTNERS
@@ -1830,7 +1858,7 @@ export default function AdminDashboard() {
             {/* List */}
             <div className="lg:col-span-7 bg-[#1A1A1A] border border-white/5 p-6 rounded-architectural overflow-hidden">
               <h3 className="font-headings text-xs font-bold uppercase tracking-widest text-white border-b border-white/10 pb-3 mb-4">
-                 scrolling partners roster
+                scrolling partners roster
               </h3>
               <table className="w-full text-xs text-left">
                 <thead>
@@ -2071,7 +2099,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        
+
 
       </main>
 
@@ -2099,418 +2127,418 @@ export default function AdminDashboard() {
 
             {/* Scrollable form body */}
             <div className="overflow-y-auto flex-grow px-6 md:px-8 py-6">
-            <form id="project-form" onSubmit={handleSaveProject} className="space-y-6 text-xs text-white">
-              {/* Row 1 */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Project Title</label>
-                  <input
-                    type="text"
-                    required
-                    value={pTitle}
-                    onChange={(e) => setPTitle(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white font-bold"
-                    placeholder="e.g. Villa Horizon"
-                  />
+              <form id="project-form" onSubmit={handleSaveProject} className="space-y-6 text-xs text-white">
+                {/* Row 1 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Project Title</label>
+                    <input
+                      type="text"
+                      required
+                      value={pTitle}
+                      onChange={(e) => setPTitle(e.target.value)}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white font-bold"
+                      placeholder="e.g. Villa Horizon"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Project Category</label>
+                    <select
+                      value={pCategoryId}
+                      onChange={(e) => setPCategoryId(e.target.value)}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white"
+                    >
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Project Category</label>
-                  <select
-                    value={pCategoryId}
-                    onChange={(e) => setPCategoryId(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white"
-                  >
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
 
-              {/* Row 2 */}
-              <div className="grid grid-cols-4 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Project/Scope Type</label>
-                  <input
-                    type="text"
-                    required
-                    value={pProjectType}
-                    onChange={(e) => setPProjectType(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2"
-                    placeholder="e.g. Residential Villa"
-                  />
+                {/* Row 2 */}
+                <div className="grid grid-cols-4 gap-4">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Project/Scope Type</label>
+                    <input
+                      type="text"
+                      required
+                      value={pProjectType}
+                      onChange={(e) => setPProjectType(e.target.value)}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2"
+                      placeholder="e.g. Residential Villa"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Location</label>
+                    <input
+                      type="text"
+                      required
+                      value={pLocation}
+                      onChange={(e) => setPLocation(e.target.value)}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2"
+                      placeholder="e.g. Alibaug, Maharashtra"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Built Area</label>
+                    <input
+                      type="text"
+                      required
+                      value={pArea}
+                      onChange={(e) => setPArea(e.target.value)}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2"
+                      placeholder="e.g. 5,400 sq ft"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Workflow Status</label>
+                    <select
+                      value={pStatus}
+                      onChange={(e) => setPStatus(e.target.value)}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-accent"
+                    >
+                      <option>CONCEPT</option>
+                      <option>DESIGN</option>
+                      <option>APPROVAL</option>
+                      <option>CONSTRUCTION</option>
+                      <option>COMPLETED</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Location</label>
-                  <input
-                    type="text"
-                    required
-                    value={pLocation}
-                    onChange={(e) => setPLocation(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2"
-                    placeholder="e.g. Alibaug, Maharashtra"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Built Area</label>
-                  <input
-                    type="text"
-                    required
-                    value={pArea}
-                    onChange={(e) => setPArea(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2"
-                    placeholder="e.g. 5,400 sq ft"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Workflow Status</label>
-                  <select
-                    value={pStatus}
-                    onChange={(e) => setPStatus(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-accent"
-                  >
-                    <option>CONCEPT</option>
-                    <option>DESIGN</option>
-                    <option>APPROVAL</option>
-                    <option>CONSTRUCTION</option>
-                    <option>COMPLETED</option>
-                  </select>
-                </div>
-              </div>
 
-              {/* Row 3 */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Project Started Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={pStartDate}
-                    onChange={(e) => setPStartDate(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white"
-                  />
+                {/* Row 3 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Project Started Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={pStartDate}
+                      onChange={(e) => setPStartDate(e.target.value)}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Project Completion Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={pCompletionDate}
+                      onChange={(e) => setPCompletionDate(e.target.value)}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Project Completion Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={pCompletionDate}
-                    onChange={(e) => setPCompletionDate(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white"
-                  />
-                </div>
-              </div>
 
-              {/* Row 4 (SEO fields) */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Meta Description</label>
-                  <input
-                    type="text"
-                    value={pDescription.substring(0, 100)}
-                    disabled
-                    className="w-full bg-[#111111]/50 border border-white/5 rounded px-3 py-2 text-mutedText"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Featured Settings</label>
-                  <div className="flex items-center gap-4 py-1">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={pFeatured}
-                        onChange={(e) => setPFeatured(e.target.checked)}
-                      />
-                      <span>Mark Featured Project</span>
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <span>Featured Order:</span>
-                      <input
-                        type="number"
-                        value={pFeaturedOrder}
-                        onChange={(e) => setPFeaturedOrder(parseInt(e.target.value))}
-                        className="w-16 bg-[#111111] border border-white/10 rounded px-2 py-1"
-                      />
+                {/* Row 4 (SEO fields) */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Meta Description</label>
+                    <input
+                      type="text"
+                      value={pDescription.substring(0, 100)}
+                      disabled
+                      className="w-full bg-[#111111]/50 border border-white/5 rounded px-3 py-2 text-mutedText"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Featured Settings</label>
+                    <div className="flex items-center gap-4 py-1">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={pFeatured}
+                          onChange={(e) => setPFeatured(e.target.checked)}
+                        />
+                        <span>Mark Featured Project</span>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <span>Featured Order:</span>
+                        <input
+                          type="number"
+                          value={pFeaturedOrder}
+                          onChange={(e) => setPFeaturedOrder(parseInt(e.target.value))}
+                          className="w-16 bg-[#111111] border border-white/10 rounded px-2 py-1"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Media Paths Input */}
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Cover Image URL</label>
-                  <input
-                    type="text"
-                    required
-                    value={pCoverImage}
-                    onChange={(e) => setPCoverImage(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 font-mono text-accent"
-                    placeholder="/uploads/file.jpg"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Before Image URL (Contour)</label>
-                  <input
-                    type="text"
-                    value={pBeforeImage}
-                    onChange={(e) => setPBeforeImage(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 font-mono"
-                    placeholder="/uploads/raw.jpg"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">After Image URL (Design)</label>
-                  <input
-                    type="text"
-                    value={pAfterImage}
-                    onChange={(e) => setPAfterImage(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 font-mono"
-                    placeholder="/uploads/done.jpg"
-                  />
-                </div>
-              </div>
-
-              {/* Project Tags Selection Checkbox */}
-              <div>
-                <label className="text-[10px] uppercase font-bold text-mutedText block mb-2">Design Tag Associations</label>
-                <div className="flex flex-wrap gap-4 bg-[#111111] p-3 rounded border border-white/5">
-                  {tags.map((t) => {
-                    const checked = pTags.includes(t.id)
-                    return (
-                      <label key={t.id} className="flex items-center gap-2 font-semibold">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setPTags([...pTags, t.id])
-                            } else {
-                              setPTags(pTags.filter((id) => id !== t.id))
-                            }
-                          }}
-                        />
-                        <span>#{t.name}</span>
-                      </label>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Project Gallery Reordering */}
-              <div>
-                <label className="text-[10px] uppercase font-bold text-mutedText block mb-2">
-                  Completed Gallery Photos Ordering
-                </label>
-                <div className="space-y-2 max-h-36 overflow-y-auto bg-[#111111] p-3 rounded border border-white/5">
-                  {pGallery.map((url, index) => (
-                    <div key={index} className="flex items-center justify-between bg-white/5 p-2 rounded">
-                      <span className="font-mono truncate max-w-sm">{url}</span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => moveGalleryItem(index, "up")}
-                          className="p-1 bg-white/5 hover:bg-accent rounded text-white"
-                        >
-                          <ArrowUp size={12} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => moveGalleryItem(index, "down")}
-                          className="p-1 bg-white/5 hover:bg-accent rounded text-white"
-                        >
-                          <ArrowDown size={12} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPGallery(pGallery.filter((_, i) => i !== index))}
-                          className="p-1 bg-red-500/10 hover:bg-red-500 rounded text-red-500 hover:text-white"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-2 mt-2">
-                  <input
-                    type="text"
-                    value={newGalleryUrl}
-                    onChange={(e) => setNewGalleryUrl(e.target.value)}
-                    className="flex-grow bg-[#111111] border border-white/10 rounded px-3 py-2 text-xs"
-                    placeholder="Enter image url (e.g. /uploads/123.jpg) to append"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!newGalleryUrl) return
-                      setPGallery([...pGallery, newGalleryUrl])
-                      setNewGalleryUrl("")
-                    }}
-                    className="px-4 py-2 bg-accent text-white uppercase text-[10px] font-bold tracking-widest rounded shrink-0"
-                  >
-                    Add Photo
-                  </button>
-                </div>
-
-                <div className="relative flex py-2.5 items-center">
-                  <div className="flex-grow border-t border-white/5"></div>
-                  <span className="flex-shrink mx-4 text-white/30 uppercase text-[9px] font-bold tracking-widest">OR</span>
-                  <div className="flex-grow border-t border-white/5"></div>
-                </div>
-
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={driveFolderUrl}
-                    onChange={(e) => setDriveFolderUrl(e.target.value)}
-                    className="flex-grow bg-[#111111] border border-white/10 rounded px-3 py-2 text-xs"
-                    placeholder="Paste public Google Drive folder link to fetch all photos"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleFetchDriveFolder}
-                    disabled={isFetchingDrive || !driveFolderUrl}
-                    className="px-4 py-2 bg-[#222222] hover:bg-[#333333] border border-white/10 text-white uppercase text-[10px] font-bold tracking-widest rounded disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                  >
-                    {isFetchingDrive ? "Fetching..." : "Fetch Folder"}
-                  </button>
-                </div>
-                <p className="text-[8px] text-white/30 mt-1">
-                  * Note: Google Drive folder must be set to <strong>"Anyone with the link can view"</strong>. All image IDs will be parsed and linked using <code>lh3.googleusercontent.com/d/</code>.
-                </p>
-              </div>
-
-              {/* Project Drawings Section */}
-              <div>
-                <label className="text-[10px] uppercase font-bold text-mutedText block mb-2">
-                  Technical Drawings & Elevational Blueprints
-                </label>
-                <div className="space-y-2 max-h-36 overflow-y-auto bg-[#111111] p-3 rounded border border-white/5">
-                  {pDrawings.map((draw, index) => (
-                    <div key={index} className="flex items-center justify-between bg-white/5 p-2 rounded">
-                      <div>
-                        <strong className="text-white">{draw.title}</strong>{" "}
-                        <span className="text-[9px] uppercase bg-white/10 px-1 py-0.5 rounded text-accent font-bold">
-                          {draw.drawingType}
-                        </span>
-                        <span className="font-mono text-[9px] block truncate text-mutedText">{draw.fileUrl}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => moveDrawingItem(index, "up")}
-                          className="p-1 bg-white/5 hover:bg-accent rounded text-white"
-                        >
-                          <ArrowUp size={12} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => moveDrawingItem(index, "down")}
-                          className="p-1 bg-white/5 hover:bg-accent rounded text-white"
-                        >
-                          <ArrowDown size={12} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPDrawings(pDrawings.filter((_, i) => i !== index))}
-                          className="p-1 bg-red-500/10 hover:bg-red-500 rounded text-red-500 hover:text-white"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-3 gap-2 mt-2">
-                  <input
-                    type="text"
-                    value={drawTitle}
-                    onChange={(e) => setDrawTitle(e.target.value)}
-                    className="bg-[#111111] border border-white/10 rounded px-2.5 py-1.5"
-                    placeholder="Drawing Title (e.g. Floor Layout Plan)"
-                  />
-                  <select
-                    value={drawType}
-                    onChange={(e) => setDrawType(e.target.value)}
-                    className="bg-[#111111] border border-white/10 rounded px-2.5 py-1.5"
-                  >
-                    <option>Floor Plan</option>
-                    <option>Elevation</option>
-                    <option>Section</option>
-                    <option>Working Drawing</option>
-                  </select>
-                  <div className="flex gap-2">
+                {/* Media Paths Input */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Cover Image URL</label>
                     <input
                       type="text"
-                      value={drawUrl}
-                      onChange={(e) => setDrawUrl(e.target.value)}
-                      className="flex-grow bg-[#111111] border border-white/10 rounded px-2.5 py-1.5"
-                      placeholder="Blueprint File URL"
+                      required
+                      value={pCoverImage}
+                      onChange={(e) => setPCoverImage(convertGoogleDriveUrl(e.target.value))}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 font-mono text-accent"
+                      placeholder="/uploads/file.jpg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Before Image URL (Contour)</label>
+                    <input
+                      type="text"
+                      value={pBeforeImage}
+                      onChange={(e) => setPBeforeImage(convertGoogleDriveUrl(e.target.value))}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 font-mono"
+                      placeholder="/uploads/raw.jpg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">After Image URL (Design)</label>
+                    <input
+                      type="text"
+                      value={pAfterImage}
+                      onChange={(e) => setPAfterImage(convertGoogleDriveUrl(e.target.value))}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 font-mono"
+                      placeholder="/uploads/done.jpg"
+                    />
+                  </div>
+                </div>
+
+                {/* Project Tags Selection Checkbox */}
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-2">Design Tag Associations</label>
+                  <div className="flex flex-wrap gap-4 bg-[#111111] p-3 rounded border border-white/5">
+                    {tags.map((t) => {
+                      const checked = pTags.includes(t.id)
+                      return (
+                        <label key={t.id} className="flex items-center gap-2 font-semibold">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setPTags([...pTags, t.id])
+                              } else {
+                                setPTags(pTags.filter((id) => id !== t.id))
+                              }
+                            }}
+                          />
+                          <span>#{t.name}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Project Gallery Reordering */}
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-2">
+                    Completed Gallery Photos Ordering
+                  </label>
+                  <div className="space-y-2 max-h-36 overflow-y-auto bg-[#111111] p-3 rounded border border-white/5">
+                    {pGallery.map((url, index) => (
+                      <div key={index} className="flex items-center justify-between bg-white/5 p-2 rounded">
+                        <span className="font-mono truncate max-w-sm">{url}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => moveGalleryItem(index, "up")}
+                            className="p-1 bg-white/5 hover:bg-accent rounded text-white"
+                          >
+                            <ArrowUp size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveGalleryItem(index, "down")}
+                            className="p-1 bg-white/5 hover:bg-accent rounded text-white"
+                          >
+                            <ArrowDown size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPGallery(pGallery.filter((_, i) => i !== index))}
+                            className="p-1 bg-red-500/10 hover:bg-red-500 rounded text-red-500 hover:text-white"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      type="text"
+                      value={newGalleryUrl}
+                      onChange={(e) => setNewGalleryUrl(convertGoogleDriveUrl(e.target.value))}
+                      className="flex-grow bg-[#111111] border border-white/10 rounded px-3 py-2 text-xs"
+                      placeholder="Enter image url (e.g. /uploads/123.jpg) to append"
                     />
                     <button
                       type="button"
-                      onClick={addDrawingItem}
-                      className="px-3 py-1.5 bg-accent text-white uppercase text-[10px] font-bold rounded"
+                      onClick={() => {
+                        if (!newGalleryUrl) return
+                        setPGallery([...pGallery, newGalleryUrl])
+                        setNewGalleryUrl("")
+                      }}
+                      className="px-4 py-2 bg-accent text-white uppercase text-[10px] font-bold tracking-widest rounded shrink-0"
                     >
-                      Add Drawing
+                      Add Photo
                     </button>
                   </div>
-                </div>
-              </div>
 
-              {/* Story Narrative Fields */}
-              <div className="border-t border-white/10 pt-4 space-y-4">
-                <h4 className="font-headings text-xs font-bold text-accent">Studio Story Description (Detailed case study)</h4>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Story Title / Concept</label>
+                  <div className="relative flex py-2.5 items-center">
+                    <div className="flex-grow border-t border-white/5"></div>
+                    <span className="flex-shrink mx-4 text-white/30 uppercase text-[9px] font-bold tracking-widest">OR</span>
+                    <div className="flex-grow border-t border-white/5"></div>
+                  </div>
+
+                  <div className="flex gap-2">
                     <input
                       type="text"
-                      value={pStoryTitle}
-                      onChange={(e) => setPStoryTitle(e.target.value)}
-                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white"
-                      placeholder="e.g. Sculpting double cantilever heights"
+                      value={driveFolderUrl}
+                      onChange={(e) => setDriveFolderUrl(e.target.value)}
+                      className="flex-grow bg-[#111111] border border-white/10 rounded px-3 py-2 text-xs"
+                      placeholder="Paste public Google Drive folder link to fetch all photos"
                     />
+                    <button
+                      type="button"
+                      onClick={handleFetchDriveFolder}
+                      disabled={isFetchingDrive || !driveFolderUrl}
+                      className="px-4 py-2 bg-[#222222] hover:bg-[#333333] border border-white/10 text-white uppercase text-[10px] font-bold tracking-widest rounded disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    >
+                      {isFetchingDrive ? "Fetching..." : "Fetch Folder"}
+                    </button>
                   </div>
-                  <div>
-                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Design Process</label>
-                    <textarea
-                      rows={2}
-                      value={pStoryProcess}
-                      onChange={(e) => setPStoryProcess(e.target.value)}
-                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white resize-none"
-                    />
-                  </div>
+                  <p className="text-[8px] text-white/30 mt-1">
+                    * Note: Google Drive folder must be set to <strong>"Anyone with the link can view"</strong>. All image IDs will be parsed and linked using <code>lh3.googleusercontent.com/d/</code>.
+                  </p>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Structural Challenge</label>
-                    <textarea
-                      rows={2}
-                      value={pStoryChallenge}
-                      onChange={(e) => setPStoryChallenge(e.target.value)}
-                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white resize-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Design Engineering Solution</label>
-                    <textarea
-                      rows={2}
-                      value={pStorySolution}
-                      onChange={(e) => setPStorySolution(e.target.value)}
-                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
 
-            </form>
+                {/* Project Drawings Section */}
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-2">
+                    Technical Drawings & Elevational Blueprints
+                  </label>
+                  <div className="space-y-2 max-h-36 overflow-y-auto bg-[#111111] p-3 rounded border border-white/5">
+                    {pDrawings.map((draw, index) => (
+                      <div key={index} className="flex items-center justify-between bg-white/5 p-2 rounded">
+                        <div>
+                          <strong className="text-white">{draw.title}</strong>{" "}
+                          <span className="text-[9px] uppercase bg-white/10 px-1 py-0.5 rounded text-accent font-bold">
+                            {draw.drawingType}
+                          </span>
+                          <span className="font-mono text-[9px] block truncate text-mutedText">{draw.fileUrl}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => moveDrawingItem(index, "up")}
+                            className="p-1 bg-white/5 hover:bg-accent rounded text-white"
+                          >
+                            <ArrowUp size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveDrawingItem(index, "down")}
+                            className="p-1 bg-white/5 hover:bg-accent rounded text-white"
+                          >
+                            <ArrowDown size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPDrawings(pDrawings.filter((_, i) => i !== index))}
+                            className="p-1 bg-red-500/10 hover:bg-red-500 rounded text-red-500 hover:text-white"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 mt-2">
+                    <input
+                      type="text"
+                      value={drawTitle}
+                      onChange={(e) => setDrawTitle(e.target.value)}
+                      className="bg-[#111111] border border-white/10 rounded px-2.5 py-1.5"
+                      placeholder="Drawing Title (e.g. Floor Layout Plan)"
+                    />
+                    <select
+                      value={drawType}
+                      onChange={(e) => setDrawType(e.target.value)}
+                      className="bg-[#111111] border border-white/10 rounded px-2.5 py-1.5"
+                    >
+                      <option>Floor Plan</option>
+                      <option>Elevation</option>
+                      <option>Section</option>
+                      <option>Working Drawing</option>
+                    </select>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={drawUrl}
+                        onChange={(e) => setDrawUrl(convertGoogleDriveUrl(e.target.value))}
+                        className="flex-grow bg-[#111111] border border-white/10 rounded px-2.5 py-1.5"
+                        placeholder="Blueprint File URL"
+                      />
+                      <button
+                        type="button"
+                        onClick={addDrawingItem}
+                        className="px-3 py-1.5 bg-accent text-white uppercase text-[10px] font-bold rounded"
+                      >
+                        Add Drawing
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Story Narrative Fields */}
+                <div className="border-t border-white/10 pt-4 space-y-4">
+                  <h4 className="font-headings text-xs font-bold text-accent">Studio Story Description (Detailed case study)</h4>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Story Title / Concept</label>
+                      <input
+                        type="text"
+                        value={pStoryTitle}
+                        onChange={(e) => setPStoryTitle(e.target.value)}
+                        className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white"
+                        placeholder="e.g. Sculpting double cantilever heights"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Design Process</label>
+                      <textarea
+                        rows={2}
+                        value={pStoryProcess}
+                        onChange={(e) => setPStoryProcess(e.target.value)}
+                        className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Structural Challenge</label>
+                      <textarea
+                        rows={2}
+                        value={pStoryChallenge}
+                        onChange={(e) => setPStoryChallenge(e.target.value)}
+                        className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Design Engineering Solution</label>
+                      <textarea
+                        rows={2}
+                        value={pStorySolution}
+                        onChange={(e) => setPStorySolution(e.target.value)}
+                        className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </form>
             </div>{/* end scrollable body */}
 
             {/* Sticky footer with save CTAs */}
@@ -2543,7 +2571,7 @@ export default function AdminDashboard() {
             <h3 className="font-headings text-md font-bold mb-4">
               {editingTeamId ? "Edit Team Profile" : "Register Team Leader"}
             </h3>
-            
+
             <form onSubmit={handleSaveTeam} className="space-y-4">
               <div>
                 <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Full Name</label>
@@ -2571,7 +2599,7 @@ export default function AdminDashboard() {
                   type="text"
                   required
                   value={tImage}
-                  onChange={(e) => setTImage(e.target.value)}
+                  onChange={(e) => setTImage(convertGoogleDriveUrl(e.target.value))}
                   className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white font-mono"
                   placeholder="/uploads/profile.jpg"
                 />
@@ -2586,7 +2614,7 @@ export default function AdminDashboard() {
                   className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white resize-none"
                 />
               </div>
-              
+
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"

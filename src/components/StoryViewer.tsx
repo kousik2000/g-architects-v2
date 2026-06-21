@@ -142,33 +142,46 @@ export default function StoryViewer({ onClose }: StoryViewerProps) {
           </div>
         </div>
 
-        {/* Media display */}
-        <div className="flex-1 flex items-center justify-center bg-black">
+        {/* Media display with blurred background for contained vertical media */}
+        <div className="w-full h-full flex items-center justify-center bg-black relative overflow-hidden">
+          {/* Blurred Background */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center blur-3xl opacity-40 scale-110 pointer-events-none select-none"
+            style={{ 
+              backgroundImage: activeStory.mediaType === "image" 
+                ? `url(${activeStory.mediaUrl})` 
+                : activeStory.thumbnailUrl 
+                  ? `url(${activeStory.thumbnailUrl})` 
+                  : "none" 
+            }}
+          />
+          
           {activeStory.mediaType === "video" ? (
             <video
               src={activeStory.mediaUrl}
               autoPlay
               muted
               playsInline
-              className="max-h-full max-w-full object-contain"
+              loop
+              className="w-full h-full object-contain pointer-events-none select-none z-10"
               onPlay={() => setIsPaused(false)}
             />
           ) : (
             <img
               src={activeStory.mediaUrl}
               alt={activeStory.title}
-              className="max-h-full max-w-full object-contain pointer-events-none"
+              className="w-full h-full object-contain pointer-events-none select-none z-10"
             />
           )}
         </div>
 
-        {/* Bottom bar with narrative explanation */}
-        <div className="p-6 bg-gradient-to-t from-black/90 to-black/30 text-white z-30">
-          <h3 className="font-headings text-lg font-bold text-white mb-1">
+        {/* Bottom bar with narrative explanation — padded for safe areas and mobile address bars */}
+        <div className="absolute bottom-0 left-0 w-full p-6 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:pb-6 bg-gradient-to-t from-black/95 via-black/60 to-transparent text-white z-30 pt-20">
+          <h3 className="font-headings text-md sm:text-lg font-bold text-white mb-1.5 drop-shadow-lg leading-snug">
             {activeStory.title}
           </h3>
-          <p className="text-xs text-white/80 font-light">
-            Live from construction grid. Updated recently.
+          <p className="text-xs text-white/80 font-light drop-shadow-md tracking-wide">
+            Live from construction update.
           </p>
         </div>
 

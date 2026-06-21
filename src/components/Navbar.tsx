@@ -64,7 +64,7 @@ export default function Navbar({ onOpenStories, onOpenQuoteModal }: NavbarProps)
                 <span className="mb-[-4px] sm:mb-[-7px] mb-[-5px]">ARCHITECTS</span>
                 <span className="text-accent mb-[-4px] sm:mb-[-7px] mb-[-5px]">&</span>
               </div>
-              <span className="mb-[-4px] sm:mb-[-7px]">CONSULTANTS</span>
+              <span className="mb-[-4px] sm:mb-[-7px]">DEVELOPERS</span>
             </div>
           </span>
         </Link>

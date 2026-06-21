@@ -39,12 +39,20 @@ export default function Login() {
       <div className="relative w-full max-w-md bg-white border border-borderLine shadow-architectural rounded-architectural p-8 md:p-10 z-10 overflow-hidden">
         
         {/* Top Header */}
-        <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-accent/10 rounded-architectural flex items-center justify-center mx-auto text-accent mb-4 shadow-inner">
-            <ShieldCheck size={24} />
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="flex items-center justify-center gap-1.5 mb-4 select-none">
+            <img src="/src/store/logov1-g.png" className="h-[35px] object-contain mr-[2px]" />
+            <span className="text-accent text-xl font-extrabold mb-[-4px]">.</span>
+            <div className="flex flex-col text-left text-xs font-headings font-extrabold leading-none text-primary tracking-tight">
+              <div className="flex gap-1 items-center">
+                <span>ARCHITECTS</span>
+                <span className="text-accent">&</span>
+              </div>
+              <span>CONSULTANTS</span>
+            </div>
           </div>
           <span className="text-[9px] uppercase font-bold text-accent tracking-widest font-headings mb-1 block">
-            G Architects Developer Portal
+            Developer Admin Portal
           </span>
           <h2 className="font-headings text-xl font-bold tracking-tight text-primary">
             Admin Authentication

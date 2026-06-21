@@ -8,11 +8,27 @@ import fs from "fs"
 import { fileURLToPath } from "url"
 import { PrismaClient } from "@prisma/client"
 import dotenv from "dotenv"
+import nodemailer from "nodemailer"
 
 dotenv.config()
 
 const prisma = new PrismaClient()
 const app = express()
+
+// --- Nodemailer SMTP Transporter Setup ---
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || "smtpout.secureserver.net",
+  port: parseInt(process.env.SMTP_PORT || "465"),
+  secure: process.env.SMTP_SECURE === "true" || process.env.SMTP_PORT === "465",
+  name: process.env.SMTP_NAME || "garchitectsanddevelopers.in",
+  auth: {
+    user: process.env.SMTP_USER || "contact@garchitectsanddevelopers.in",
+    pass: process.env.SMTP_PASS || "Saichand765899#",
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
+})
 const PORT = process.env.PORT || 5000
 const JWT_SECRET = process.env.JWT_SECRET || "g_architects_secret_key_12345"
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "g_architects_refresh_secret_key_9876"
@@ -1046,6 +1062,87 @@ app.post("/api/contact-requests", upload.single("attachment"), async (req: any, 
         source: source || "Website Form",
       },
     })
+
+    // Prepare HTML content from replyemail.html template on disk
+    let templatePath = path.join(__dirname, "replyemail.html")
+    if (!fs.existsSync(templatePath)) {
+      const altPaths = [
+        path.join(process.cwd(), "server", "src", "replyemail.html"),
+        path.join(process.cwd(), "src", "replyemail.html"),
+        path.join(process.cwd(), "replyemail.html"),
+      ]
+      for (const alt of altPaths) {
+        if (fs.existsSync(alt)) {
+          templatePath = alt
+          break
+        }
+      }
+    }
+    let htmlContent = ""
+    try {
+      htmlContent = fs.readFileSync(templatePath, "utf-8")
+      htmlContent = htmlContent
+        .replace(/{{name}}/g, name || "")
+        .replace(/{{phone}}/g, phone || "")
+        .replace(/{{email}}/g, email || "")
+        .replace(/{{message}}/g, message || "")
+        .replace(/{{serviceType}}/g, serviceType || "Architectural Planning")
+        .replace(/{{projectType}}/g, projectType || "")
+        .replace(/{{budget}}/g, budget || "")
+    } catch (err) {
+      console.error("Failed to read email template file from disk:", err)
+      // Fallback html if the template file loading fails
+      htmlContent = `
+        <h3>New Contact Lead</h3>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Phone:</strong> ${phone}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Service:</strong> ${serviceType}</p>
+        <p><strong>Type:</strong> ${projectType}</p>
+        <p><strong>Budget:</strong> ${budget}</p>
+        <p><strong>Brief:</strong> ${message}</p>
+      `
+    }
+
+    // Prepare notification email to the business (G Architects admin inbox)
+    const mailToBusiness: any = {
+      from: process.env.SMTP_USER || "contact@garchitectsanddevelopers.in",
+      to: process.env.SMTP_USER || "contact@garchitectsanddevelopers.in",
+      subject: `New Client Brief Submission from ${name}`,
+      html: htmlContent
+    }
+
+    // Attach blueprint file if present
+    if (req.file) {
+      mailToBusiness.attachments = [
+        {
+          filename: req.file.originalname,
+          path: req.file.path,
+        }
+      ]
+    }
+
+    // Prepare confirmation email to the client user
+    const mailToUser = {
+      from: process.env.SMTP_USER || "contact@garchitectsanddevelopers.in",
+      to: email,
+      subject: 'Thank You for Contacting G Architects & Consultants!',
+      html: htmlContent
+    }
+
+    // Trigger emails in background
+    transporter.sendMail(mailToBusiness).then(() => {
+      console.log(`Lead notification email sent successfully to ${mailToBusiness.to}`)
+    }).catch((err) => {
+      console.error("Failed to send email to business:", err)
+    })
+
+    transporter.sendMail(mailToUser).then(() => {
+      console.log(`Confirmation email sent successfully to client ${email}`)
+    }).catch((err) => {
+      console.error("Failed to send reply email to client user:", err)
+    })
+
     res.status(201).json(lead)
   } catch (error: any) {
     res.status(500).json({ error: error.message })
@@ -1079,17 +1176,73 @@ app.patch("/api/contact-requests/:id", authenticateToken, requireRole(["SuperAdm
   }
 })
 
+app.delete("/api/contact-requests/:id", authenticateToken, requireRole(["SuperAdmin", "Admin"]), async (req: any, res: any) => {
+  try {
+    await prisma.contactLead.delete({
+      where: { id: req.params.id },
+    })
+    res.json({ message: "Inquiry deleted successfully" })
+  } catch (error: any) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
 // ==========================================
 // 13. ADMIN OVERVIEW / METRICS WIDGETS
 // ==========================================
+app.post("/api/analytics/track", async (req: any, res: any) => {
+  const { path, projectId } = req.body
+  if (!path) return res.status(400).json({ error: "Path is required" })
+  try {
+    const pageView = await prisma.pageView.create({
+      data: {
+        path,
+        projectId: projectId || null,
+      },
+    })
+    res.status(201).json(pageView)
+  } catch (error: any) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
 app.get("/api/admin/metrics", authenticateToken, async (req: any, res: any) => {
   try {
     const totalProjects = await prisma.project.count({ where: { deletedAt: null } })
     const activeProjects = await prisma.project.count({ where: { deletedAt: null, status: { not: "COMPLETED" } } })
     const totalReviews = await prisma.review.count({ where: { deletedAt: null } })
     const newLeads = await prisma.contactLead.count({ where: { status: "New" } })
+    const allLeads = await prisma.contactLead.count()
     const activeStories = await prisma.activity.count({ where: { expiryDate: { gt: new Date() } } })
     const activeAnnouncements = await prisma.announcement.count({ where: { active: true } })
+
+    // Real visitor analytics from PageView table
+    const websiteVisits = await prisma.pageView.count({ where: { path: "/" } })
+    
+    // Most visited project calculation
+    const mostVisitedGroup = await prisma.pageView.groupBy({
+      by: ["projectId"],
+      _count: { id: true },
+      where: { projectId: { not: null } },
+      orderBy: {
+        _count: {
+          id: "desc"
+        }
+      },
+      take: 1,
+    })
+    
+    let mostVisitedProjectTitle = "NONE"
+    if (mostVisitedGroup.length > 0 && mostVisitedGroup[0].projectId) {
+      const p = await prisma.project.findUnique({ where: { id: mostVisitedGroup[0].projectId } })
+      if (p) mostVisitedProjectTitle = p.title.toUpperCase()
+    }
+
+    // Lead conversion rate: (total enquiries / total homepage visits) * 100
+    let conversionRate = 0
+    if (websiteVisits > 0) {
+      conversionRate = parseFloat(((allLeads / websiteVisits) * 100).toFixed(1))
+    }
 
     res.json({
       totalProjects,
@@ -1098,6 +1251,9 @@ app.get("/api/admin/metrics", authenticateToken, async (req: any, res: any) => {
       newLeads,
       activeStories,
       activeAnnouncements,
+      websiteVisits: websiteVisits || 1, // fallback to 1 if no visits yet to avoid UI division by 0
+      mostVisitedProject: mostVisitedProjectTitle,
+      conversionRate: conversionRate || 0.0,
     })
   } catch (error: any) {
     res.status(500).json({ error: error.message })

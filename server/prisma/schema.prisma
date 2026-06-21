@@ -217,3 +217,10 @@ model MediaAsset {
   fileSize  Int
   createdAt DateTime @default(now())
 }
+
+model PageView {
+  id        String   @id @default(uuid())
+  path      String
+  projectId String?
+  createdAt DateTime @default(now())
+}

@@ -158,6 +158,7 @@ interface AppState {
   fetchLeads: () => Promise<void>
   createLead: (formData: FormData) => Promise<boolean>
   updateLeadStatus: (id: string, data: any) => Promise<boolean>
+  deleteLead: (id: string) => Promise<boolean>
 
   fetchMetrics: () => Promise<void>
 
@@ -767,6 +768,24 @@ export const useAppStore = create<AppState>((set, get) => {
       }
     },
 
+    deleteLead: async (id) => {
+      try {
+        const res = await fetch(`/api/contact-requests/${id}`, {
+          method: "DELETE",
+          headers: getHeaders(),
+        })
+        if (res.ok) {
+          get().fetchLeads()
+          get().fetchMetrics() // update overview metric counts too
+          return true
+        }
+        return false
+      } catch (e) {
+        console.error(e)
+        return false
+      }
+    },
+
     fetchMetrics: async () => {
       try {
         const res = await fetch("/api/admin/metrics", {
@@ -859,3 +878,34 @@ export const useAppStore = create<AppState>((set, get) => {
     },
   }
 })
+
+export function convertGoogleDriveUrl(url: string): string {
+  if (!url) return "";
+  const trimmed = url.trim();
+  
+  // Pattern 1: drive.google.com/file/d/FILE_ID
+  const fileDMatch = trimmed.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]{25,50})/);
+  if (fileDMatch && fileDMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${fileDMatch[1]}`;
+  }
+  
+  // Pattern 2: drive.google.com/open?id=FILE_ID
+  const openIdMatch = trimmed.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]{25,50})/);
+  if (openIdMatch && openIdMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${openIdMatch[1]}`;
+  }
+  
+  // Pattern 3: drive.google.com/uc?id=FILE_ID
+  const ucIdMatch = trimmed.match(/drive\.google\.com\/uc\?(?:.*&)?id=([a-zA-Z0-9_-]{25,50})/);
+  if (ucIdMatch && ucIdMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${ucIdMatch[1]}`;
+  }
+
+  // Pattern 4: docs.google.com/file/d/FILE_ID
+  const docsMatch = trimmed.match(/docs\.google\.com\/file\/d\/([a-zA-Z0-9_-]{25,50})/);
+  if (docsMatch && docsMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${docsMatch[1]}`;
+  }
+
+  return trimmed;
+}

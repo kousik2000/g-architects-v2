@@ -51,6 +51,13 @@ export default function Home() {
     fetchReviews()
     fetchSettings()
     fetchPartners()
+
+    // Track homepage view
+    fetch("/api/analytics/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: "/" }),
+    }).catch((e) => console.error("Analytics tracking failed:", e))
   }, [])
 
   // Filter projects on filter changes
@@ -288,15 +295,16 @@ export default function Home() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {[
-            { title: "Architectural Planning", desc: "Complete layouts, site elevations, and regulatory blueprints matching structural specifications." },
-            { title: "Residential Design", desc: "High-end duplexes, villas, and apartments combining glass cantilever spans and passive ventilation." },
-            { title: "Commercial Design", desc: "Multi-tenant business hubs, storefront elevations, and workspaces optimization." },
-            { title: "Interior Architecture", desc: "Sleek, minimalist residential lobbies, custom storage wood millwork, and lighting grids." },
-            { title: "Landscape Design", desc: "Eco-friendly resort trails, pool pavilions, and active rainwater drainage contouring." },
-            { title: "3D Rendering & Visualization", desc: "Immersive high-fidelity visual fly-throughs showing textures and light conditions." },
+            { id: "architectural-planning", title: "Architectural Planning", desc: "Complete layouts, site elevations, and regulatory blueprints matching structural specifications." },
+            { id: "residential-design", title: "Residential Design", desc: "High-end duplexes, villas, and apartments combining glass cantilever spans and passive ventilation." },
+            { id: "commercial-design", title: "Commercial Design", desc: "Multi-tenant business hubs, storefront elevations, and workspaces optimization." },
+            { id: "interior-design", title: "Interior Architecture", desc: "Sleek, minimalist residential lobbies, custom storage wood millwork, and lighting grids." },
+            { id: "landscape-design", title: "Landscape Design", desc: "Eco-friendly resort trails, pool pavilions, and active rainwater drainage contouring." },
+            { id: "rendering-visualization", title: "3D Rendering & Visualization", desc: "Immersive high-fidelity visual fly-throughs showing textures and light conditions." },
           ].map((srv, idx) => (
-            <div
+            <Link
               key={idx}
+              to={`/services#${srv.id}`}
               className="bg-white rounded-architectural border border-borderLine p-6 shadow-architectural hover:shadow-architecturalHover hover:border-accent transition-all duration-300 group flex flex-col justify-between"
             >
               <div>
@@ -314,7 +322,7 @@ export default function Home() {
                 <span>Explore Spec</span>
                 <ArrowRight size={12} className="group-hover:translate-x-1.5 transition-transform" />
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
