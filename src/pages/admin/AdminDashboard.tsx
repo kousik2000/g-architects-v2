@@ -167,6 +167,8 @@ export default function AdminDashboard() {
   // Gallery URLs reordering
   const [pGallery, setPGallery] = useState<string[]>([])
   const [newGalleryUrl, setNewGalleryUrl] = useState("")
+  const [driveFolderUrl, setDriveFolderUrl] = useState("")
+  const [isFetchingDrive, setIsFetchingDrive] = useState(false)
 
   // Technical drawings lists
   const [pDrawings, setPDrawings] = useState<any[]>([]) // array of { title, drawingType, fileUrl }
@@ -202,6 +204,7 @@ export default function AdminDashboard() {
     setPTags([])
     setPGallery([])
     setPDrawings([])
+    setDriveFolderUrl("")
     setProjectModalOpen(true)
   }
 
@@ -239,6 +242,7 @@ export default function AdminDashboard() {
     
     // Set drawings
     setPDrawings(proj.drawings || [])
+    setDriveFolderUrl("")
     
     setProjectModalOpen(true)
   }
@@ -286,6 +290,39 @@ export default function AdminDashboard() {
       fetchMetrics()
     } else {
       alert("Error saving project settings.")
+    }
+  }
+
+  // Fetch images list from public Google Drive folder link
+  const handleFetchDriveFolder = async () => {
+    if (!driveFolderUrl) return
+    setIsFetchingDrive(true)
+    try {
+      const res = await fetch("/api/admin/fetch-drive-folder", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ folderUrl: driveFolderUrl }),
+      })
+      const data = await res.json()
+      if (res.ok && data.imageUrls) {
+        if (data.imageUrls.length === 0) {
+          alert("No public images found in this Google Drive folder. Please make sure the folder is public ('Anyone with the link can view').")
+        } else {
+          setPGallery([...pGallery, ...data.imageUrls])
+          setDriveFolderUrl("")
+          alert(`Successfully fetched and appended ${data.imageUrls.length} images from Google Drive!`)
+        }
+      } else {
+        alert(data.error || "Failed to fetch images from Google Drive.")
+      }
+    } catch (e: any) {
+      console.error(e)
+      alert("Error contacting server: " + e.message)
+    } finally {
+      setIsFetchingDrive(false)
     }
   }
 
@@ -2303,7 +2340,7 @@ export default function AdminDashboard() {
                     type="text"
                     value={newGalleryUrl}
                     onChange={(e) => setNewGalleryUrl(e.target.value)}
-                    className="flex-grow bg-[#111111] border border-white/10 rounded px-3 py-2"
+                    className="flex-grow bg-[#111111] border border-white/10 rounded px-3 py-2 text-xs"
                     placeholder="Enter image url (e.g. /uploads/123.jpg) to append"
                   />
                   <button
@@ -2313,11 +2350,38 @@ export default function AdminDashboard() {
                       setPGallery([...pGallery, newGalleryUrl])
                       setNewGalleryUrl("")
                     }}
-                    className="px-4 py-2 bg-accent text-white uppercase text-[10px] font-bold tracking-widest rounded"
+                    className="px-4 py-2 bg-accent text-white uppercase text-[10px] font-bold tracking-widest rounded shrink-0"
                   >
                     Add Photo
                   </button>
                 </div>
+
+                <div className="relative flex py-2.5 items-center">
+                  <div className="flex-grow border-t border-white/5"></div>
+                  <span className="flex-shrink mx-4 text-white/30 uppercase text-[9px] font-bold tracking-widest">OR</span>
+                  <div className="flex-grow border-t border-white/5"></div>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={driveFolderUrl}
+                    onChange={(e) => setDriveFolderUrl(e.target.value)}
+                    className="flex-grow bg-[#111111] border border-white/10 rounded px-3 py-2 text-xs"
+                    placeholder="Paste public Google Drive folder link to fetch all photos"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleFetchDriveFolder}
+                    disabled={isFetchingDrive || !driveFolderUrl}
+                    className="px-4 py-2 bg-[#222222] hover:bg-[#333333] border border-white/10 text-white uppercase text-[10px] font-bold tracking-widest rounded disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                  >
+                    {isFetchingDrive ? "Fetching..." : "Fetch Folder"}
+                  </button>
+                </div>
+                <p className="text-[8px] text-white/30 mt-1">
+                  * Note: Google Drive folder must be set to <strong>"Anyone with the link can view"</strong>. All image IDs will be parsed and linked using <code>lh3.googleusercontent.com/d/</code>.
+                </p>
               </div>
 
               {/* Project Drawings Section */}

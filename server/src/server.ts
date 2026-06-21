@@ -255,6 +255,46 @@ app.delete("/api/media/:id", authenticateToken, requireRole(["SuperAdmin", "Admi
   }
 })
 
+// Endpoint to parse public Google Drive folders and return direct image links
+app.post("/api/admin/fetch-drive-folder", authenticateToken, requireRole(["SuperAdmin", "Admin"]), async (req: any, res: any) => {
+  const { folderUrl } = req.body
+  if (!folderUrl) return res.status(400).json({ error: "Folder URL is required" })
+
+  // Extract folder ID
+  const match = folderUrl.match(/(?:folders\/|id=)([a-zA-Z0-9_-]{25,50})/)
+  if (!match) return res.status(400).json({ error: "Invalid Google Drive folder URL" })
+
+  const folderId = match[1]
+  const url = `https://drive.google.com/embeddedfolderview?id=${folderId}`
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    })
+
+    if (!response.ok) {
+      return res.status(response.status).json({ error: `Google Drive returned status code ${response.status}` })
+    }
+
+    const html = await response.text()
+    const regex = /\/file\/d\/([a-zA-Z0-9_-]{25,45})\/view/g
+    const fileIds: string[] = []
+    let m;
+    while ((m = regex.exec(html)) !== null) {
+      if (!fileIds.includes(m[1])) {
+        fileIds.push(m[1])
+      }
+    }
+
+    const imageUrls = fileIds.map(id => `https://lh3.googleusercontent.com/d/${id}`)
+    res.json({ imageUrls })
+  } catch (error: any) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
 // ==========================================
 // 4. PROJECT CATEGORY ENDPOINTS
 // ==========================================
@@ -439,6 +479,8 @@ app.post("/api/projects", authenticateToken, requireRole(["SuperAdmin", "Admin"]
     metaKeywords,
     ogImage,
     tags, // Array of Tag IDs
+    gallery, // Array of gallery URLs
+    drawings // Array of drawings
   } = req.body
 
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
@@ -484,6 +526,31 @@ app.post("/api/projects", authenticateToken, requireRole(["SuperAdmin", "Admin"]
         tags: { include: { tag: true } }
       }
     })
+
+    // Save gallery if provided
+    if (gallery && Array.isArray(gallery)) {
+      await prisma.projectGallery.createMany({
+        data: gallery.map((url: string, index: number) => ({
+          projectId: project.id,
+          imageUrl: url,
+          displayOrder: index,
+        })),
+      })
+    }
+
+    // Save drawings if provided
+    if (drawings && Array.isArray(drawings)) {
+      await prisma.projectDrawing.createMany({
+        data: drawings.map((d: any, index: number) => ({
+          projectId: project.id,
+          title: d.title,
+          drawingType: d.drawingType,
+          fileUrl: d.fileUrl,
+          displayOrder: index,
+        })),
+      })
+    }
+
     res.status(201).json(project)
   } catch (error: any) {
     res.status(500).json({ error: error.message })

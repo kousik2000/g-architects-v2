@@ -43,23 +43,21 @@ export default function Navbar({ onOpenStories, onOpenQuoteModal }: NavbarProps)
 
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-40 transition-all duration-300 ${
-        scrolled
-          ? "py-4 px-6 md:px-12"
-          : "py-6 px-6 md:px-12"
-      }`}
+      className={`fixed top-0 left-0 w-full z-40 transition-all duration-300 ${scrolled
+        ? "py-4 px-6 md:px-12"
+        : "py-6 px-6 md:px-12"
+        }`}
     >
       <div
-        className={`max-w-7xl mx-auto flex items-center justify-between rounded-architectural transition-all duration-300 ${
-          scrolled
-            ? "glass-nav shadow-glass px-6 py-3"
-            : "bg-transparent px-2 py-2 border-b border-transparent"
-        }`}
+        className={`max-w-7xl mx-auto flex items-center justify-between rounded-architectural transition-all duration-300 ${scrolled
+          ? "glass-nav shadow-glass px-6 py-3"
+          : "bg-transparent px-2 py-2 border-b border-transparent"
+          }`}
       >
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <span className="font-headings text-xl font-extrabold tracking-tight text-primary">
-            G<span className="text-accent">.</span>ARCHITECTS
+          <span className="flex items-end font-headings text-xl font-extrabold tracking-tight text-primary">
+            <img src="src\store\logo-g.png" width={20} className="mr-[3px] h-[25px]" /><span className="text-accent mb-[-7px]">.</span><span className="mb-[-7px]">ARCHITECTS</span>
           </span>
         </Link>
 
@@ -67,9 +65,8 @@ export default function Navbar({ onOpenStories, onOpenQuoteModal }: NavbarProps)
         <nav className="hidden md:flex items-center gap-8">
           <Link
             to="/"
-            className={`text-sm font-medium hover:text-accent transition-colors ${
-              isHome ? "text-accent" : "text-mutedText"
-            }`}
+            className={`text-sm font-medium hover:text-accent transition-colors ${isHome ? "text-accent" : "text-mutedText"
+              }`}
           >
             Home
           </Link>
@@ -138,7 +135,7 @@ export default function Navbar({ onOpenStories, onOpenQuoteModal }: NavbarProps)
           >
             Get Quote
           </button>
-          
+
           <Link
             to="/admin"
             className="text-xs font-semibold text-mutedText hover:text-primary transition-colors py-1.5 px-2.5 border border-borderLine rounded-architectural"

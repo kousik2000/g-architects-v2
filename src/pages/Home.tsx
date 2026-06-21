@@ -172,7 +172,7 @@ export default function Home() {
           <div className="lg:col-span-6 flex flex-col items-start text-left overflow-hidden relative z-20">
             <span className="text-[10px] text-accent font-extrabold uppercase tracking-widest flex items-center gap-1.5 font-headings mb-3">
               <Sparkles size={12} />
-              Award Winning Architectural Studio
+              Dream. Design. Affordability.
             </span>
             <h1 className="font-headings text-3xl sm:text-5xl md:text-5xl lg:text-5xl font-black leading-tight text-primary tracking-tight mb-6 break-words w-full">
               {settings?.heroTitle || "CRAFTING SPATIAL TRANSFORMATIONS"}
@@ -180,7 +180,7 @@ export default function Home() {
             <p className="text-sm md:text-base text-mutedText font-light max-w-lg mb-8 leading-relaxed">
               {settings?.heroSubtitle || "Modern architectural studio shaping sustainable & luxurious environments."}
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
               <button
                 onClick={() => {
@@ -413,7 +413,7 @@ export default function Home() {
       {/* 5. PORTFOLIO SHOWCASE */}
       <section id="portfolio" className="py-24 bg-surface border-t border-borderLine">
         <div className="max-w-7xl mx-auto px-4 md:px-12">
-          
+
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
               <span className="text-[10px] text-accent font-bold uppercase tracking-widest font-headings mb-2 block">
@@ -513,7 +513,7 @@ export default function Home() {
                     <h3 className="font-headings text-lg font-bold text-primary group-hover:text-accent transition-colors duration-300 mb-3">
                       {proj.title}
                     </h3>
-                    
+
                     <p className="text-xs text-mutedText font-light leading-relaxed mb-6 line-clamp-2">
                       {proj.description}
                     </p>
@@ -723,7 +723,7 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-architectural border border-borderLine flex items-center justify-center text-accent shrink-0 mt-0.5">
                     <Phone size={16} />
@@ -772,7 +772,7 @@ export default function Home() {
               <p className="text-xs text-mutedText font-light mb-8 leading-relaxed">
                 Ready to deploy coordinates? Click below to configure your files and parameters for an architectural brief.
               </p>
-              
+
               <div className="space-y-4 mb-8">
                 {[
                   { icon: <CheckCircle size={16} />, text: "Free Initial Design Consultation" },

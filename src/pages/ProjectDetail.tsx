@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { useAppStore } from "../store/appStore"
+import BeforeAfterSlider from "../components/BeforeAfterSlider"
 import {
   ArrowLeft,
   Calendar,
@@ -254,6 +255,30 @@ export default function ProjectDetail() {
             )}
           </div>
         </div>
+
+        {/* Before/After Transformation Slider */}
+        {project.beforeImage && project.afterImage && (
+          <div className="mb-20 border-t border-borderLine pt-16 text-center">
+            <div className="max-w-xl mx-auto mb-10">
+              <span className="text-[10px] text-accent font-bold uppercase tracking-widest font-headings mb-2 block">
+                Spatial Evolution
+              </span>
+              <h2 className="font-headings text-2xl font-bold text-primary mb-2">
+                Before & After Transformation
+              </h2>
+              <p className="text-xs text-mutedText font-light">
+                Slide the handle horizontally to view the transition from initial site grading/construction to final completed design.
+              </p>
+            </div>
+            <div className="max-w-4xl mx-auto">
+              <BeforeAfterSlider
+                beforeImage={project.beforeImage}
+                afterImage={project.afterImage}
+                title={`${project.title} Evolution`}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Image Gallery */}
         {project.gallery.length > 0 && (
