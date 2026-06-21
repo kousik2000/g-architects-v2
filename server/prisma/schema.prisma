@@ -109,6 +109,7 @@ model Project {
   drawings         ProjectDrawing[]
   reviews          Review[]
   tags             ProjectTag[]
+  announcements    Announcement[]
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 }
@@ -167,13 +168,17 @@ model Activity {
 }
 
 model Announcement {
-  id        String   @id @default(uuid())
-  title     String
-  content   String
-  startDate DateTime
-  endDate   DateTime
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id           String   @id @default(uuid())
+  title        String
+  content      String
+  startDate    DateTime
+  endDate      DateTime
+  active       Boolean  @default(true)
+  imageUrl     String?  // Optional banner image
+  externalLink String?  // Optional URL for a CTA button
+  projectId    String?  // Optional link to a project
+  project      Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
 }
 
 model Partner {

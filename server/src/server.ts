@@ -763,6 +763,10 @@ app.delete("/api/activities/:id", authenticateToken, requireRole(["SuperAdmin", 
 // 9. LATEST NEWS / ANNOUNCEMENT POPUP MODULE
 // ==========================================
 
+const announcementInclude = {
+  project: { select: { id: true, title: true, slug: true, coverImage: true } },
+}
+
 app.get("/api/announcements", async (req: any, res: any) => {
   const now = new Date()
   try {
@@ -773,6 +777,7 @@ app.get("/api/announcements", async (req: any, res: any) => {
         endDate: { gte: now },
       },
       orderBy: { createdAt: "desc" },
+      include: announcementInclude,
     })
     res.json(popups)
   } catch (error: any) {
@@ -783,7 +788,10 @@ app.get("/api/announcements", async (req: any, res: any) => {
 // Admin endpoint to get all popups
 app.get("/api/admin/announcements", authenticateToken, async (req: any, res: any) => {
   try {
-    const list = await prisma.announcement.findMany({ orderBy: { createdAt: "desc" } })
+    const list = await prisma.announcement.findMany({
+      orderBy: { createdAt: "desc" },
+      include: announcementInclude,
+    })
     res.json(list)
   } catch (error: any) {
     res.status(500).json({ error: error.message })
@@ -791,7 +799,7 @@ app.get("/api/admin/announcements", authenticateToken, async (req: any, res: any
 })
 
 app.post("/api/announcements", authenticateToken, requireRole(["SuperAdmin", "Admin"]), async (req: any, res: any) => {
-  const { title, content, startDate, endDate, active } = req.body
+  const { title, content, startDate, endDate, active, imageUrl, externalLink, projectId } = req.body
   try {
     const news = await prisma.announcement.create({
       data: {
@@ -800,7 +808,11 @@ app.post("/api/announcements", authenticateToken, requireRole(["SuperAdmin", "Ad
         startDate: new Date(startDate),
         endDate: new Date(endDate),
         active: active !== undefined ? active : true,
+        imageUrl: imageUrl || null,
+        externalLink: externalLink || null,
+        projectId: projectId || null,
       },
+      include: announcementInclude,
     })
     res.status(201).json(news)
   } catch (error: any) {
@@ -809,7 +821,7 @@ app.post("/api/announcements", authenticateToken, requireRole(["SuperAdmin", "Ad
 })
 
 app.put("/api/announcements/:id", authenticateToken, requireRole(["SuperAdmin", "Admin"]), async (req: any, res: any) => {
-  const { title, content, startDate, endDate, active } = req.body
+  const { title, content, startDate, endDate, active, imageUrl, externalLink, projectId } = req.body
   try {
     const news = await prisma.announcement.update({
       where: { id: req.params.id },
@@ -819,7 +831,11 @@ app.put("/api/announcements/:id", authenticateToken, requireRole(["SuperAdmin", 
         startDate: new Date(startDate),
         endDate: new Date(endDate),
         active,
+        imageUrl: imageUrl || null,
+        externalLink: externalLink || null,
+        projectId: projectId || null,
       },
+      include: announcementInclude,
     })
     res.json(news)
   } catch (error: any) {

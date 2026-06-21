@@ -491,6 +491,9 @@ export default function AdminDashboard() {
   const [newsStart, setNewsStart] = useState("")
   const [newsEnd, setNewsEnd] = useState("")
   const [newsActive, setNewsActive] = useState(true)
+  const [newsImageUrl, setNewsImageUrl] = useState("")
+  const [newsExternalLink, setNewsExternalLink] = useState("")
+  const [newsProjectId, setNewsProjectId] = useState("")
 
   const openCreateNews = () => {
     setEditingNewsId(null)
@@ -502,6 +505,9 @@ export default function AdminDashboard() {
     endDate.setDate(endDate.getDate() + 30)
     setNewsEnd(endDate.toISOString().split("T")[0])
     setNewsActive(true)
+    setNewsImageUrl("")
+    setNewsExternalLink("")
+    setNewsProjectId("")
     setNewsModalOpen(true)
   }
 
@@ -512,12 +518,24 @@ export default function AdminDashboard() {
     setNewsStart(new Date(news.startDate).toISOString().split("T")[0])
     setNewsEnd(new Date(news.endDate).toISOString().split("T")[0])
     setNewsActive(news.active)
+    setNewsImageUrl(news.imageUrl || "")
+    setNewsExternalLink(news.externalLink || "")
+    setNewsProjectId(news.projectId || "")
     setNewsModalOpen(true)
   }
 
   const handleSaveNews = async (e: React.FormEvent) => {
     e.preventDefault()
-    const payload = { title: newsTitle, content: newsContent, startDate: newsStart, endDate: newsEnd, active: newsActive }
+    const payload = {
+      title: newsTitle,
+      content: newsContent,
+      startDate: newsStart,
+      endDate: newsEnd,
+      active: newsActive,
+      imageUrl: newsImageUrl || null,
+      externalLink: newsExternalLink || null,
+      projectId: newsProjectId || null,
+    }
     let success = false
     if (editingNewsId) {
       success = await updateAnnouncement(editingNewsId, payload)
@@ -1587,9 +1605,9 @@ export default function AdminDashboard() {
       {newsModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm p-4 flex items-center justify-center">
           <div className="absolute inset-0" onClick={() => setNewsModalOpen(false)} />
-          <div className="relative bg-[#1A1A1A] border border-white/10 rounded-architectural max-w-lg w-full shadow-2xl z-10">
+          <div className="relative bg-[#1A1A1A] border border-white/10 rounded-architectural max-w-lg w-full shadow-2xl z-10 flex flex-col" style={{ maxHeight: "90vh" }}>
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
               <h3 className="font-headings text-sm font-bold text-white uppercase">
                 {editingNewsId ? "Edit Announcement" : "New Announcement"}
               </h3>
@@ -1598,64 +1616,124 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSaveNews} className="p-6 space-y-4 text-xs text-white">
-              <div>
-                <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Announcement Title</label>
-                <input
-                  type="text" required value={newsTitle} onChange={(e) => setNewsTitle(e.target.value)}
-                  className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
-                  placeholder="e.g. New Project Launch — Villa Horizon"
-                />
-              </div>
+            {/* Scrollable Form */}
+            <div className="overflow-y-auto flex-grow">
+              <form id="news-form" onSubmit={handleSaveNews} className="p-6 space-y-5 text-xs text-white">
 
-              <div>
-                <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Content / Body Text</label>
-                <textarea
-                  rows={4} required value={newsContent} onChange={(e) => setNewsContent(e.target.value)}
-                  className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent resize-none"
-                  placeholder="Describe the announcement. This will appear in the popup on the homepage."
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+                {/* Title */}
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Start Date</label>
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Announcement Title *</label>
                   <input
-                    type="date" required value={newsStart} onChange={(e) => setNewsStart(e.target.value)}
+                    type="text" required value={newsTitle} onChange={(e) => setNewsTitle(e.target.value)}
                     className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+                    placeholder="e.g. New Project Launch — Villa Horizon"
                   />
                 </div>
+
+                {/* Content */}
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">End Date</label>
-                  <input
-                    type="date" required value={newsEnd} onChange={(e) => setNewsEnd(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Content / Body Text *</label>
+                  <textarea
+                    rows={3} required value={newsContent} onChange={(e) => setNewsContent(e.target.value)}
+                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent resize-none"
+                    placeholder="Describe the announcement. This appears in the popup on the homepage."
                   />
                 </div>
-              </div>
 
-              <div className="flex items-center justify-between py-2 border-t border-white/10">
-                <span className="text-xs font-medium text-white">Mark as Active (shows on website)</span>
-                <button
-                  type="button"
-                  onClick={() => setNewsActive(!newsActive)}
-                  className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${newsActive ? "bg-accent" : "bg-white/20"}`}
-                >
-                  <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${newsActive ? "translate-x-6" : "translate-x-0"}`} />
-                </button>
-              </div>
+                {/* Dates */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Start Date *</label>
+                    <input
+                      type="date" required value={newsStart} onChange={(e) => setNewsStart(e.target.value)}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">End Date *</label>
+                    <input
+                      type="date" required value={newsEnd} onChange={(e) => setNewsEnd(e.target.value)}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                </div>
 
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setNewsModalOpen(false)}
-                  className="px-4 py-2 bg-white/5 border border-white/5 hover:bg-white/10 text-white rounded text-[10px] font-bold uppercase">
-                  Cancel
-                </button>
-                <button type="submit" className="px-5 py-2 bg-accent text-white rounded text-[10px] font-bold uppercase tracking-wider">
-                  {editingNewsId ? "Update Announcement" : "Publish Announcement"}
-                </button>
-              </div>
-            </form>
+                {/* Divider */}
+                <div className="border-t border-white/10 pt-4">
+                  <p className="text-[10px] text-mutedText uppercase font-bold tracking-wider mb-4">Optional Enhancements</p>
+
+                  {/* Banner Image URL */}
+                  <div className="mb-4">
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Banner Image URL</label>
+                    <input
+                      type="url" value={newsImageUrl} onChange={(e) => setNewsImageUrl(e.target.value)}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white font-mono text-[10px] focus:outline-none focus:border-accent"
+                      placeholder="https://... or /uploads/..."
+                    />
+                    {newsImageUrl && (
+                      <div className="mt-2 rounded overflow-hidden border border-white/10 h-24">
+                        <img src={newsImageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e: any) => { e.target.style.display = "none" }} />
+                      </div>
+                    )}
+                    <p className="text-[9px] text-white/30 mt-1">Displayed as a full-width banner at top of popup.</p>
+                  </div>
+
+                  {/* Project Link */}
+                  <div className="mb-4">
+                    <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">Link to Project (CTA Button)</label>
+                    <select
+                      value={newsProjectId} onChange={(e) => { setNewsProjectId(e.target.value); if (e.target.value) setNewsExternalLink("") }}
+                      className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+                    >
+                      <option value="">— No Project —</option>
+                      {projects.filter(p => !p.deletedAt).map((p: any) => (
+                        <option key={p.id} value={p.id}>{p.title}</option>
+                      ))}
+                    </select>
+                    <p className="text-[9px] text-white/30 mt-1">Adds a "View Project" button that redirects to the project detail page.</p>
+                  </div>
+
+                  {/* External Link — only show if no project selected */}
+                  {!newsProjectId && (
+                    <div className="mb-4">
+                      <label className="text-[10px] uppercase font-bold text-mutedText block mb-1.5">External Link / Download URL</label>
+                      <input
+                        type="url" value={newsExternalLink} onChange={(e) => setNewsExternalLink(e.target.value)}
+                        className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white font-mono text-[10px] focus:outline-none focus:border-accent"
+                        placeholder="https://... (brochure, form, etc.)"
+                      />
+                      <p className="text-[9px] text-white/30 mt-1">Adds an "Open Link" button (opens in new tab). Used if no project is linked.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Active Toggle */}
+                <div className="flex items-center justify-between py-3 border-t border-white/10">
+                  <div>
+                    <span className="text-xs font-medium text-white block">Mark as Active</span>
+                    <span className="text-[9px] text-white/40">Shows on website within date range</span>
+                  </div>
+                  <button
+                    type="button" onClick={() => setNewsActive(!newsActive)}
+                    className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${newsActive ? "bg-accent" : "bg-white/20"}`}
+                  >
+                    <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${newsActive ? "translate-x-6" : "translate-x-0"}`} />
+                  </button>
+                </div>
+
+              </form>
+            </div>
+
+            {/* Sticky Footer */}
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-white/10 shrink-0 bg-[#1A1A1A]">
+              <button type="button" onClick={() => setNewsModalOpen(false)}
+                className="px-4 py-2 bg-white/5 border border-white/5 hover:bg-white/10 text-white rounded text-[10px] font-bold uppercase">
+                Cancel
+              </button>
+              <button type="submit" form="news-form" className="px-5 py-2 bg-accent text-white rounded text-[10px] font-bold uppercase tracking-wider">
+                {editingNewsId ? "Update Announcement" : "Publish Announcement"}
+              </button>
+            </div>
           </div>
         </div>
       )}
