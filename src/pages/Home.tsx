@@ -124,6 +124,29 @@ export default function Home() {
   // Filter projects on filter changes
   const activeProjects = (projects ?? []).filter((p) => !p.deletedAt)
 
+  // Top featured projects for Hero section
+  const featuredProjects = activeProjects
+    .filter((p) => p.featured)
+    .sort((a, b) => (a.featuredOrder || 0) - (b.featuredOrder || 0))
+
+  const heroCard1 = featuredProjects[0] || {
+    title: "VILLA HORIZON",
+    location: "Alibaug, Maharashtra",
+    coverImage: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=600&q=80",
+    slug: "villa-horizon",
+    status: "Featured Project",
+    isFallback: true
+  }
+
+  const heroCard2 = featuredProjects[1] || {
+    title: "ZENITH TOWER",
+    location: "Salt Lake, Kolkata",
+    coverImage: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80",
+    slug: "zenith-office-tower",
+    status: "Under Construction",
+    isFallback: true
+  }
+
   // Dynamic hero stats — only show if > 0
   const heroStats = [
     settings?.yearsExperience ? { label: "Years Exp", value: `${settings.yearsExperience}+` } : null,
@@ -202,32 +225,46 @@ export default function Home() {
             }}
           >
             {/* Card 1 */}
-            <div className="absolute w-[160px] sm:w-[240px] aspect-[4/5] bg-surface rounded-architectural shadow-architectural border border-borderLine p-3 top-0 left-4 rotate-[-4deg] hover:rotate-0 hover:z-20 hover:scale-105 transition-all duration-300">
+            <Link
+              to={`/projects/${heroCard1.slug}`}
+              className="absolute w-[160px] sm:w-[240px] aspect-[4/5] bg-surface rounded-architectural shadow-architectural border border-borderLine p-3 top-0 left-4 rotate-[-4deg] hover:rotate-0 hover:z-20 hover:scale-105 transition-all duration-300 block group"
+            >
               <div className="w-full h-[75%] rounded-lg overflow-hidden bg-borderLine mb-2">
                 <img
-                  src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=600&q=80"
-                  alt="Villa Horizon"
-                  className="w-full h-full object-cover"
+                  src={heroCard1.coverImage}
+                  alt={heroCard1.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <span className="text-[9px] uppercase font-bold text-accent font-headings">Featured Project</span>
-              <h4 className="font-headings text-xs font-bold text-primary truncate mt-0.5">VILLA HORIZON</h4>
-              <p className="text-[9px] text-mutedText">Hyderabad, India</p>
-            </div>
+              <span className="text-[9px] uppercase font-bold text-accent font-headings">
+                {heroCard1.isFallback ? "Featured Project" : "Featured"}
+              </span>
+              <h4 className="font-headings text-xs font-bold text-primary truncate mt-0.5 group-hover:text-accent transition-colors">
+                {heroCard1.title.toUpperCase()}
+              </h4>
+              <p className="text-[9px] text-mutedText">{heroCard1.location}</p>
+            </Link>
 
             {/* Card 2 */}
-            <div className="absolute w-[140px] sm:w-[200px] aspect-[4/5] bg-surface rounded-architectural shadow-architectural border border-borderLine p-3 bottom-0 right-4 rotate-[6deg] hover:rotate-0 hover:z-20 hover:scale-105 transition-all duration-300">
+            <Link
+              to={`/projects/${heroCard2.slug}`}
+              className="absolute w-[140px] sm:w-[200px] aspect-[4/5] bg-surface rounded-architectural shadow-architectural border border-borderLine p-3 bottom-0 right-4 rotate-[6deg] hover:rotate-0 hover:z-20 hover:scale-105 transition-all duration-300 block group"
+            >
               <div className="w-full h-[75%] rounded-lg overflow-hidden bg-borderLine mb-2">
                 <img
-                  src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80"
-                  alt="Zenith Commercial Tower"
-                  className="w-full h-full object-cover"
+                  src={heroCard2.coverImage}
+                  alt={heroCard2.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <span className="text-[9px] uppercase font-bold text-accent font-headings">Under Construction</span>
-              <h4 className="font-headings text-xs font-bold text-primary truncate mt-0.5">ZENITH TOWER</h4>
-              <p className="text-[9px] text-mutedText">Hyderabad, India</p>
-            </div>
+              <span className="text-[9px] uppercase font-bold text-accent font-headings">
+                {heroCard2.isFallback ? "Under Construction" : heroCard2.status}
+              </span>
+              <h4 className="font-headings text-xs font-bold text-primary truncate mt-0.5 group-hover:text-accent transition-colors">
+                {heroCard2.title.toUpperCase()}
+              </h4>
+              <p className="text-[9px] text-mutedText">{heroCard2.location}</p>
+            </Link>
 
             {/* Background architectural grid circle wireframe */}
             <div className="absolute w-[260px] sm:w-[380px] h-[260px] sm:h-[380px] border border-accent/15 rounded-full pointer-events-none z-[-1] animate-spin" style={{ animationDuration: "120s" }} />
