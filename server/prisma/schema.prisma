@@ -19,17 +19,29 @@ model User {
 }
 
 model SiteSettings {
-  id             String   @id @default("global-settings")
-  heroTitle      String   @default("CRAFTING SPATIAL TRANSFORMATIONS")
-  heroSubtitle   String   @default("Modern architectural studio shaping sustainable & luxurious environments.")
-  aboutTitle     String   @default("OUR JOURNEY")
-  aboutContent   String   @default("Founded with a vision of bridging organic curves and functional geometries, G Architects has evolved from a boutique atelier to an award-winning spatial design laboratory. We reject typical box structures in favor of fluid forms, sculptural lines, and passive climate responsive architectural engineering.")
-  contactPhone   String   @default("+91 98765 43210")
-  contactEmail   String   @default("info@garchitects.com")
-  officeAddress  String   @default("102, Design District, Sector 5, Salt Lake, Kolkata, West Bengal, India")
-  socialMedia    String   @default("{\"twitter\":\"https://twitter.com\",\"instagram\":\"https://instagram.com\",\"linkedin\":\"https://linkedin.com\"}") // JSON string
-  footerContent  String   @default("© 2026 G Architects & Developers. All rights reserved.")
-  updatedAt      DateTime @updatedAt
+  id                     String   @id @default("global-settings")
+  heroTitle              String   @default("CRAFTING SPATIAL TRANSFORMATIONS")
+  heroSubtitle           String   @default("Modern architectural studio shaping sustainable & luxurious environments.")
+  aboutTitle             String   @default("OUR JOURNEY")
+  aboutContent           String   @default("Founded with a vision of bridging organic curves and functional geometries, G Architects has evolved from a boutique atelier to an award-winning spatial design laboratory. We reject typical box structures in favor of fluid forms, sculptural lines, and passive climate responsive architectural engineering.")
+  contactPhone           String   @default("+91 98765 43210")
+  contactEmail           String   @default("info@garchitects.com")
+  officeAddress          String   @default("102, Design District, Sector 5, Salt Lake, Kolkata, West Bengal, India")
+  socialMedia            String   @default("{\"twitter\":\"https://twitter.com\",\"instagram\":\"https://instagram.com\",\"linkedin\":\"https://linkedin.com\"}") // JSON string
+  footerContent          String   @default("© 2026 G Architects & Developers. All rights reserved.")
+  // Hero Stats (0 = hidden on website)
+  yearsExperience        Int      @default(0)
+  totalProjectsCount     Int      @default(0)
+  designAwardsCount      Int      @default(0)
+  // Section Visibility
+  showSpatialEvolutions  Boolean  @default(true)
+  showTeam               Boolean  @default(true)
+  showFaq                Boolean  @default(true)
+  // Milestones JSON array: [{year, title, desc}]
+  milestones             String   @default("[{\"year\":\"2012\",\"title\":\"Foundation of G Architects\",\"desc\":\"Atelier founded with two architects designing private flats.\"},{\"year\":\"2016\",\"title\":\"First Cantilever Villa\",\"desc\":\"Completed Villa Vista in Alibaug, gaining national architectural press features.\"},{\"year\":\"2020\",\"title\":\"Green Commercial Expansion\",\"desc\":\"Opened office to design carbon-neutral commercial buildings.\"},{\"year\":\"2026\",\"title\":\"Spatial Labs Setup\",\"desc\":\"Deploying immersive client VR visual rooms and local active tracking.\"}]")
+  // Google Maps Embed URL
+  mapEmbedUrl            String   @default("https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3806.066298798695!2d78.38424667493636!3d17.456540583442546!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcb914f73b95815%3A0xc70099ce4da0b619!2sG%20Architects!5e0!3m2!1sen!2sin!4v1781966911091!5m2!1sen!2sin")
+  updatedAt              DateTime @updatedAt
 }
 
 model ProjectCategory {

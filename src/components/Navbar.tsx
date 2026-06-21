@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAppStore } from "../store/appStore"
-import { Eye, Mail, Phone, MapPin } from "lucide-react"
 
 interface NavbarProps {
   onOpenStories: () => void
@@ -98,12 +97,14 @@ export default function Navbar({ onOpenStories, onOpenQuoteModal }: NavbarProps)
           >
             Reviews
           </button>
-          <button
-            onClick={() => handleNavClick("#faq")}
-            className="text-sm font-medium text-mutedText hover:text-accent transition-colors"
-          >
-            FAQ
-          </button>
+          {settings?.showFaq !== false && (
+            <button
+              onClick={() => handleNavClick("#faq")}
+              className="text-sm font-medium text-mutedText hover:text-accent transition-colors"
+            >
+              FAQ
+            </button>
+          )}
           <button
             onClick={() => handleNavClick("#contact")}
             className="text-sm font-medium text-mutedText hover:text-accent transition-colors"

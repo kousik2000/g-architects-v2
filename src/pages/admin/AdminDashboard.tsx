@@ -18,9 +18,7 @@ import {
   Trash2,
   Edit2,
   RefreshCw,
-  TrendingUp,
   Download,
-  Calendar,
   CheckCircle,
   X,
   ArrowUp,
@@ -499,7 +497,10 @@ export default function AdminDashboard() {
     setNewsTitle("")
     setNewsContent("")
     setNewsStart(new Date().toISOString().split("T")[0])
-    setNewsEnd(new Date().toISOString().split("T")[0])
+    // Default end date: 30 days from now
+    const endDate = new Date()
+    endDate.setDate(endDate.getDate() + 30)
+    setNewsEnd(endDate.toISOString().split("T")[0])
     setNewsActive(true)
     setNewsModalOpen(true)
   }
@@ -561,6 +562,15 @@ export default function AdminDashboard() {
   const [sEmail, setSEmail] = useState("")
   const [sAddress, setSAddress] = useState("")
   const [sFooter, setSFooter] = useState("")
+  // New extended fields
+  const [sYearsExp, setSYearsExp] = useState(0)
+  const [sTotalProjects, setSTotalProjects] = useState(0)
+  const [sAwards, setSAwards] = useState(0)
+  const [sShowSpatial, setSShowSpatial] = useState(true)
+  const [sShowTeam, setSShowTeam] = useState(true)
+  const [sShowFaq, setSShowFaq] = useState(true)
+  const [sMapUrl, setSMapUrl] = useState("")
+  const [sMilestones, setSMilestones] = useState<{ year: string; title: string; desc: string }[]>([])
 
   useEffect(() => {
     if (settings) {
@@ -571,7 +581,19 @@ export default function AdminDashboard() {
       setSPhone(settings.contactPhone)
       setSEmail(settings.contactEmail)
       setSAddress(settings.officeAddress)
-      setSFooter(settings.footerContent)
+      setSFooter(settings.footerContent || "")
+      setSYearsExp(settings.yearsExperience || 0)
+      setSTotalProjects(settings.totalProjectsCount || 0)
+      setSAwards(settings.designAwardsCount || 0)
+      setSShowSpatial(settings.showSpatialEvolutions !== false)
+      setSShowTeam(settings.showTeam !== false)
+      setSShowFaq(settings.showFaq !== false)
+      setSMapUrl(settings.mapEmbedUrl || "")
+      try {
+        setSMilestones(settings.milestones ? JSON.parse(settings.milestones) : [])
+      } catch {
+        setSMilestones([])
+      }
     }
   }, [settings])
 
@@ -586,6 +608,14 @@ export default function AdminDashboard() {
       contactEmail: sEmail,
       officeAddress: sAddress,
       footerContent: sFooter,
+      yearsExperience: sYearsExp,
+      totalProjectsCount: sTotalProjects,
+      designAwardsCount: sAwards,
+      showSpatialEvolutions: sShowSpatial,
+      showTeam: sShowTeam,
+      showFaq: sShowFaq,
+      mapEmbedUrl: sMapUrl,
+      milestones: JSON.stringify(sMilestones),
     })
     if (success) {
       alert("Site settings updated successfully!")
@@ -1642,100 +1672,200 @@ export default function AdminDashboard() {
             TAB CONTENT: GLOBAL CMS SETTINGS
             ========================================================= */}
         {activeTab === "settings" && (
-          <div className="bg-[#1A1A1A] border border-white/5 p-6 rounded-architectural max-w-3xl animate-fadeIn">
-            <h3 className="font-headings text-xs font-bold uppercase tracking-widest text-white border-b border-white/10 pb-3 mb-6">
-              Global Website Texts CMS Config
-            </h3>
-            
-            <form onSubmit={handleSaveSettings} className="space-y-6 text-xs text-white">
+          <div className="space-y-6 animate-fadeIn max-w-4xl">
+
+            {/* ── SECTION 1: Hero Content ── */}
+            <div className="bg-[#1A1A1A] border border-white/5 p-6 rounded-architectural">
+              <h3 className="font-headings text-xs font-bold uppercase tracking-widest text-white border-b border-white/10 pb-3 mb-6 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-accent inline-block" />
+                Hero Section Content
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Hero Section Title</label>
-                  <input
-                    type="text"
-                    required
-                    value={sHeroTitle}
-                    onChange={(e) => setSHeroTitle(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 focus:outline-none focus:border-accent text-white font-bold"
-                  />
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Hero Title</label>
+                  <input type="text" value={sHeroTitle} onChange={(e) => setSHeroTitle(e.target.value)}
+                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white text-xs focus:outline-none focus:border-accent" />
                 </div>
                 <div>
                   <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Hero Subtitle</label>
-                  <input
-                    type="text"
-                    required
-                    value={sHeroSubtitle}
-                    onChange={(e) => setSHeroSubtitle(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 focus:outline-none focus:border-accent text-white"
-                  />
+                  <input type="text" value={sHeroSubtitle} onChange={(e) => setSHeroSubtitle(e.target.value)}
+                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white text-xs focus:outline-none focus:border-accent" />
                 </div>
               </div>
+            </div>
 
+            {/* ── SECTION 2: Hero Stats (0 = hidden) ── */}
+            <div className="bg-[#1A1A1A] border border-white/5 p-6 rounded-architectural">
+              <h3 className="font-headings text-xs font-bold uppercase tracking-widest text-white border-b border-white/10 pb-3 mb-6 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-accent inline-block" />
+                Hero Stats Counter
+                <span className="text-[9px] text-mutedText font-normal ml-2 normal-case">(Set to 0 to hide on website)</span>
+              </h3>
+              <div className="grid grid-cols-3 gap-6">
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Years Experience</label>
+                  <input type="number" min="0" value={sYearsExp} onChange={(e) => setSYearsExp(parseInt(e.target.value) || 0)}
+                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white text-xs focus:outline-none focus:border-accent" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Total Projects</label>
+                  <input type="number" min="0" value={sTotalProjects} onChange={(e) => setSTotalProjects(parseInt(e.target.value) || 0)}
+                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white text-xs focus:outline-none focus:border-accent" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Design Awards</label>
+                  <input type="number" min="0" value={sAwards} onChange={(e) => setSAwards(parseInt(e.target.value) || 0)}
+                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white text-xs focus:outline-none focus:border-accent" />
+                </div>
+              </div>
+            </div>
+
+            {/* ── SECTION 3: Section Visibility ── */}
+            <div className="bg-[#1A1A1A] border border-white/5 p-6 rounded-architectural">
+              <h3 className="font-headings text-xs font-bold uppercase tracking-widest text-white border-b border-white/10 pb-3 mb-6 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-accent inline-block" />
+                Section Visibility Controls
+              </h3>
+              <div className="space-y-4">
+                {[
+                  { label: "Spatial Evolutions (Before/After Slider)", value: sShowSpatial, set: setSShowSpatial },
+                  { label: "Team Section (Meet Our Leadership)", value: sShowTeam, set: setSShowTeam },
+                  { label: "FAQ Accordion Section", value: sShowFaq, set: setSShowFaq },
+                ].map(({ label, value, set }) => (
+                  <div key={label} className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
+                    <span className="text-xs text-white font-medium">{label}</span>
+                    <button
+                      type="button"
+                      onClick={() => set(!value)}
+                      className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${value ? "bg-accent" : "bg-white/20"}`}
+                    >
+                      <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${value ? "translate-x-6" : "translate-x-0"}`} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-mutedText mt-4">Hiding a section also removes it from the top navigation bar.</p>
+            </div>
+
+            {/* ── SECTION 4: About Content ── */}
+            <div className="bg-[#1A1A1A] border border-white/5 p-6 rounded-architectural">
+              <h3 className="font-headings text-xs font-bold uppercase tracking-widest text-white border-b border-white/10 pb-3 mb-6 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-accent inline-block" />
+                About / Journey Section
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">About Journey Title</label>
-                  <input
-                    type="text"
-                    required
-                    value={sAboutTitle}
-                    onChange={(e) => setSAboutTitle(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 focus:outline-none focus:border-accent text-white font-bold"
-                  />
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Section Title</label>
+                  <input type="text" value={sAboutTitle} onChange={(e) => setSAboutTitle(e.target.value)}
+                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white text-xs focus:outline-none focus:border-accent" />
                 </div>
                 <div>
                   <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">About Content Paragraph</label>
-                  <textarea
-                    rows={4}
-                    required
-                    value={sAboutContent}
-                    onChange={(e) => setSAboutContent(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 focus:outline-none focus:border-accent text-white resize-none"
-                  />
+                  <textarea rows={3} value={sAboutContent} onChange={(e) => setSAboutContent(e.target.value)}
+                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white text-xs focus:outline-none focus:border-accent resize-none" />
                 </div>
               </div>
+            </div>
 
+            {/* ── SECTION 5: Milestones Editor ── */}
+            <div className="bg-[#1A1A1A] border border-white/5 p-6 rounded-architectural">
+              <h3 className="font-headings text-xs font-bold uppercase tracking-widest text-white border-b border-white/10 pb-3 mb-6 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-accent inline-block" />
+                Studio Milestones Timeline
+              </h3>
+              <div className="space-y-3 mb-4">
+                {sMilestones.map((m, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2 items-start bg-[#111111] p-3 rounded-lg border border-white/5">
+                    <div className="col-span-2">
+                      <label className="text-[9px] text-mutedText uppercase font-bold block mb-1">Year</label>
+                      <input type="text" value={m.year}
+                        onChange={(e) => { const u = [...sMilestones]; u[idx] = { ...u[idx], year: e.target.value }; setSMilestones(u) }}
+                        className="w-full bg-[#1A1A1A] border border-white/10 rounded px-2 py-1.5 text-white text-xs" placeholder="2024" />
+                    </div>
+                    <div className="col-span-4">
+                      <label className="text-[9px] text-mutedText uppercase font-bold block mb-1">Title</label>
+                      <input type="text" value={m.title}
+                        onChange={(e) => { const u = [...sMilestones]; u[idx] = { ...u[idx], title: e.target.value }; setSMilestones(u) }}
+                        className="w-full bg-[#1A1A1A] border border-white/10 rounded px-2 py-1.5 text-white text-xs" placeholder="Milestone Title" />
+                    </div>
+                    <div className="col-span-5">
+                      <label className="text-[9px] text-mutedText uppercase font-bold block mb-1">Description</label>
+                      <input type="text" value={m.desc}
+                        onChange={(e) => { const u = [...sMilestones]; u[idx] = { ...u[idx], desc: e.target.value }; setSMilestones(u) }}
+                        className="w-full bg-[#1A1A1A] border border-white/10 rounded px-2 py-1.5 text-white text-xs" placeholder="Brief description..." />
+                    </div>
+                    <div className="col-span-1 flex items-end pb-0.5">
+                      <button type="button" onClick={() => setSMilestones(sMilestones.filter((_, i) => i !== idx))}
+                        className="p-1.5 text-red-400 hover:bg-red-500/10 rounded w-full flex items-center justify-center mt-5">
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button type="button" onClick={() => setSMilestones([...sMilestones, { year: "", title: "", desc: "" }])}
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded text-[10px] font-bold uppercase tracking-wider">
+                <Plus size={12} />
+                Add Milestone
+              </button>
+            </div>
+
+            {/* ── SECTION 6: Contact Info ── */}
+            <div className="bg-[#1A1A1A] border border-white/5 p-6 rounded-architectural">
+              <h3 className="font-headings text-xs font-bold uppercase tracking-widest text-white border-b border-white/10 pb-3 mb-6 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-accent inline-block" />
+                Contact Information
+              </h3>
               <div className="grid grid-cols-3 gap-6">
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Contact Phone</label>
-                  <input
-                    type="text"
-                    required
-                    value={sPhone}
-                    onChange={(e) => setSPhone(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 focus:outline-none"
-                  />
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Phone</label>
+                  <input type="text" value={sPhone} onChange={(e) => setSPhone(e.target.value)}
+                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white text-xs focus:outline-none focus:border-accent" />
                 </div>
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Contact Email</label>
-                  <input
-                    type="email"
-                    required
-                    value={sEmail}
-                    onChange={(e) => setSEmail(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 focus:outline-none"
-                  />
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Email</label>
+                  <input type="email" value={sEmail} onChange={(e) => setSEmail(e.target.value)}
+                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white text-xs focus:outline-none focus:border-accent" />
                 </div>
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Office Address Coord</label>
-                  <input
-                    type="text"
-                    required
-                    value={sAddress}
-                    onChange={(e) => setSAddress(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 focus:outline-none"
-                  />
+                  <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">Office Address</label>
+                  <input type="text" value={sAddress} onChange={(e) => setSAddress(e.target.value)}
+                    className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white text-xs focus:outline-none focus:border-accent" />
                 </div>
               </div>
+            </div>
 
-              <button
-                type="submit"
-                className="px-6 py-3 bg-accent text-white uppercase text-xs font-bold tracking-widest rounded shadow hover:bg-opacity-95"
-              >
-                Save CMS Configuration
+            {/* ── SECTION 7: Google Maps Embed ── */}
+            <div className="bg-[#1A1A1A] border border-white/5 p-6 rounded-architectural">
+              <h3 className="font-headings text-xs font-bold uppercase tracking-widest text-white border-b border-white/10 pb-3 mb-6 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-accent inline-block" />
+                Google Maps Embed
+              </h3>
+              <label className="text-[10px] uppercase font-bold text-mutedText block mb-1">
+                Maps iFrame src URL <span className="text-white/40 normal-case">(paste the URL value from the iframe src="..." attribute)</span>
+              </label>
+              <input type="text" value={sMapUrl} onChange={(e) => setSMapUrl(e.target.value)}
+                className="w-full bg-[#111111] border border-white/10 rounded px-3 py-2 text-white text-xs font-mono focus:outline-none focus:border-accent mb-4"
+                placeholder="https://www.google.com/maps/embed?pb=..." />
+              {sMapUrl && (
+                <div className="rounded overflow-hidden border border-white/10">
+                  <iframe src={sMapUrl} width="100%" height="200" style={{ border: 0 }} loading="lazy" title="Map Preview" />
+                </div>
+              )}
+            </div>
+
+            {/* ── SAVE BUTTON ── */}
+            <form onSubmit={handleSaveSettings}>
+              <button type="submit"
+                className="w-full py-4 bg-accent text-white uppercase text-xs font-bold tracking-widest rounded-architectural shadow hover:bg-opacity-95 flex items-center justify-center gap-2">
+                <CheckCircle size={14} />
+                Save All CMS Configuration
               </button>
             </form>
           </div>
         )}
+
+        
 
       </main>
 
@@ -1743,20 +1873,27 @@ export default function AdminDashboard() {
           OVERLAY MODAL: PROJECT CREATION/EDITING
           ========================================================= */}
       {projectModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 overflow-y-auto p-4 flex items-center justify-center">
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-architectural w-full max-w-4xl p-6 md:p-8 relative shadow-2xl">
-            <button
-              onClick={() => setProjectModalOpen(false)}
-              className="absolute top-4 right-4 text-mutedText hover:text-white"
-            >
-              <X size={20} />
-            </button>
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm p-4 flex items-center justify-center">
+          {/* Clicking backdrop closes modal */}
+          <div className="absolute inset-0" onClick={() => setProjectModalOpen(false)} />
 
-            <h3 className="font-headings text-md font-bold mb-6 text-white border-b border-white/5 pb-3 uppercase">
-              {editingProjectId ? "Modify Project Parameters" : "Draft New Project Coordinates"}
-            </h3>
+          <div className="relative bg-[#1A1A1A] border border-white/10 rounded-architectural w-full max-w-4xl shadow-2xl z-10 flex flex-col" style={{ maxHeight: '90vh' }}>
+            {/* Sticky header inside modal */}
+            <div className="flex items-center justify-between px-6 md:px-8 py-4 border-b border-white/10 shrink-0">
+              <h3 className="font-headings text-md font-bold text-white uppercase">
+                {editingProjectId ? "Modify Project Parameters" : "Draft New Project Coordinates"}
+              </h3>
+              <button
+                onClick={() => setProjectModalOpen(false)}
+                className="p-1.5 text-mutedText hover:text-white hover:bg-white/10 rounded transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>{/* end sticky header */}
 
-            <form onSubmit={handleSaveProject} className="space-y-6 text-xs text-white">
+            {/* Scrollable form body */}
+            <div className="overflow-y-auto flex-grow px-6 md:px-8 py-6">
+            <form id="project-form" onSubmit={handleSaveProject} className="space-y-6 text-xs text-white">
               {/* Row 1 */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -2140,23 +2277,26 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Save CTAs */}
-              <div className="flex justify-end gap-3 pt-6 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setProjectModalOpen(false)}
-                  className="px-5 py-2.5 bg-white/5 border border-white/5 hover:bg-white/10 text-white rounded font-bold uppercase tracking-wider text-[10px]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 bg-accent text-white rounded font-bold uppercase tracking-wider text-[10px]"
-                >
-                  Save Draft
-                </button>
-              </div>
             </form>
+            </div>{/* end scrollable body */}
+
+            {/* Sticky footer with save CTAs */}
+            <div className="flex justify-end gap-3 px-6 md:px-8 py-4 border-t border-white/10 shrink-0 bg-[#1A1A1A]">
+              <button
+                type="button"
+                onClick={() => setProjectModalOpen(false)}
+                className="px-5 py-2.5 bg-white/5 border border-white/5 hover:bg-white/10 text-white rounded font-bold uppercase tracking-wider text-[10px]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="project-form"
+                className="px-6 py-2.5 bg-accent text-white rounded font-bold uppercase tracking-wider text-[10px]"
+              >
+                Save Draft
+              </button>
+            </div>
           </div>
         </div>
       )}

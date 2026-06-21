@@ -174,11 +174,28 @@ app.get("/api/settings", async (req: any, res: any) => {
 })
 
 app.put("/api/settings", authenticateToken, requireRole(["SuperAdmin", "Admin"]), async (req: any, res: any) => {
-  const { heroTitle, heroSubtitle, aboutTitle, aboutContent, contactPhone, contactEmail, officeAddress, socialMedia, footerContent } = req.body
+  const {
+    heroTitle, heroSubtitle, aboutTitle, aboutContent,
+    contactPhone, contactEmail, officeAddress, socialMedia, footerContent,
+    yearsExperience, totalProjectsCount, designAwardsCount,
+    showSpatialEvolutions, showTeam, showFaq,
+    milestones, mapEmbedUrl,
+  } = req.body
   try {
     const settings = await prisma.siteSettings.update({
       where: { id: "global-settings" },
-      data: { heroTitle, heroSubtitle, aboutTitle, aboutContent, contactPhone, contactEmail, officeAddress, socialMedia, footerContent },
+      data: {
+        heroTitle, heroSubtitle, aboutTitle, aboutContent,
+        contactPhone, contactEmail, officeAddress, socialMedia, footerContent,
+        yearsExperience: yearsExperience !== undefined ? parseInt(yearsExperience) : undefined,
+        totalProjectsCount: totalProjectsCount !== undefined ? parseInt(totalProjectsCount) : undefined,
+        designAwardsCount: designAwardsCount !== undefined ? parseInt(designAwardsCount) : undefined,
+        showSpatialEvolutions: showSpatialEvolutions !== undefined ? Boolean(showSpatialEvolutions) : undefined,
+        showTeam: showTeam !== undefined ? Boolean(showTeam) : undefined,
+        showFaq: showFaq !== undefined ? Boolean(showFaq) : undefined,
+        milestones: milestones !== undefined ? milestones : undefined,
+        mapEmbedUrl: mapEmbedUrl !== undefined ? mapEmbedUrl : undefined,
+      },
     })
     res.json(settings)
   } catch (error: any) {

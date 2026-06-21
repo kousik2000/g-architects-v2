@@ -40,7 +40,8 @@ export default function StoryViewer({ onClose }: StoryViewerProps) {
     return () => clearInterval(timerRef.current)
   }, [currentIndex, isPaused, stories])
 
-  const handlePrev = () => {
+  const handlePrev = (e?: React.MouseEvent) => {
+    e?.stopPropagation()
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1)
     } else {
@@ -49,7 +50,8 @@ export default function StoryViewer({ onClose }: StoryViewerProps) {
     }
   }
 
-  const handleNext = () => {
+  const handleNext = (e?: React.MouseEvent) => {
+    e?.stopPropagation()
     if (currentIndex < stories.length - 1) {
       setCurrentIndex((prev) => prev + 1)
     } else {
@@ -61,15 +63,28 @@ export default function StoryViewer({ onClose }: StoryViewerProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center select-none font-body">
-      {/* Background click handler */}
-      <div className="absolute inset-0" onClick={onClose} />
+      {/* Main container — clicking outside the card calls onClose */}
+      <div
+        className="absolute inset-0"
+        onClick={onClose}
+      />
 
-      {/* Main container */}
-      <div className="relative w-full max-w-lg h-full sm:h-[85vh] sm:rounded-architectural overflow-hidden bg-primary shadow-2xl flex flex-col justify-between z-10">
-        
-        {/* Navigation tap zones */}
-        <div className="absolute top-20 bottom-16 left-0 w-1/3 z-20 cursor-w-resize" onClick={handlePrev} />
-        <div className="absolute top-20 bottom-16 right-0 w-1/3 z-20 cursor-e-resize" onClick={handleNext} />
+      {/* Story card itself */}
+      <div
+        className="relative w-full max-w-lg h-full sm:h-[85vh] sm:rounded-architectural overflow-hidden bg-primary shadow-2xl flex flex-col justify-between z-10"
+        onClick={(e) => e.stopPropagation()} // prevent bubbling to overlay
+      >
+
+        {/* LEFT tap zone — previous story */}
+        <div
+          className="absolute top-20 bottom-16 left-0 w-1/3 z-20 cursor-w-resize"
+          onClick={handlePrev}
+        />
+        {/* RIGHT tap zone — next story */}
+        <div
+          className="absolute top-20 bottom-16 right-0 w-1/3 z-20 cursor-e-resize"
+          onClick={handleNext}
+        />
 
         {/* Top bar (Progress indicators and info) */}
         <div className="absolute top-0 left-0 w-full p-4 bg-gradient-to-b from-black/80 to-transparent z-30">
@@ -104,17 +119,23 @@ export default function StoryViewer({ onClose }: StoryViewerProps) {
                   G Architects Live
                 </h4>
                 <p className="text-white/60 text-[10px]">
-                  Site Update #{currentIndex + 1}
+                  Site Update #{currentIndex + 1} of {stories.length}
                 </p>
               </div>
             </div>
 
             {/* Top controls */}
-            <div className="flex items-center gap-3 text-white">
-              <button onClick={() => setIsPaused(!isPaused)} className="p-1.5 hover:text-accent transition-colors">
+            <div className="flex items-center gap-3 text-white z-40 relative">
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsPaused(!isPaused) }}
+                className="p-1.5 hover:text-accent transition-colors"
+              >
                 {isPaused ? <Play size={16} /> : <Pause size={16} />}
               </button>
-              <button onClick={onClose} className="p-1.5 hover:text-accent transition-colors">
+              <button
+                onClick={(e) => { e.stopPropagation(); onClose() }}
+                className="p-1.5 hover:text-accent transition-colors"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -151,20 +172,25 @@ export default function StoryViewer({ onClose }: StoryViewerProps) {
           </p>
         </div>
 
-        {/* Left and Right Desktop Buttons */}
+        {/* Desktop Prev/Next Buttons — always visible on larger screens */}
         <button
           onClick={handlePrev}
           disabled={currentIndex === 0}
-          className="absolute -left-16 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors hidden lg:flex items-center justify-center disabled:opacity-30 disabled:pointer-events-none"
+          className="absolute -left-14 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors hidden sm:flex items-center justify-center disabled:opacity-30 disabled:pointer-events-none z-40"
         >
           <ChevronLeft size={24} />
         </button>
         <button
           onClick={handleNext}
-          className="absolute -right-16 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors hidden lg:flex items-center justify-center"
+          className="absolute -right-14 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors hidden sm:flex items-center justify-center z-40"
         >
           <ChevronRight size={24} />
         </button>
+
+        {/* Mobile swipe hint */}
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-6 z-30 sm:hidden pointer-events-none">
+          <span className="text-white/30 text-[10px] uppercase tracking-widest">← Tap sides to navigate →</span>
+        </div>
       </div>
     </div>
   )

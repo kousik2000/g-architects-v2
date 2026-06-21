@@ -100,7 +100,8 @@ export default function App() {
   const [leadPhone, setLeadPhone] = useState("")
   const [leadProjectType, setLeadProjectType] = useState("Residential")
   const [leadServiceType, setLeadServiceType] = useState("Architectural Planning")
-  const [leadBudget, setLeadBudget] = useState("₹1.5 - 2.5 Cr")
+  const [leadBudget, setLeadBudget] = useState("< ₹10 Lakhs")
+  const [leadCustomBudget, setLeadCustomBudget] = useState("")
   const [leadMessage, setLeadMessage] = useState("")
   const [leadAttachment, setLeadAttachment] = useState<File | null>(null)
   const [submittingLead, setSubmittingLead] = useState(false)
@@ -108,6 +109,11 @@ export default function App() {
 
   useEffect(() => {
     checkAuth()
+
+    // Allow Home.tsx contact section button to open the quote modal
+    const handler = () => setQuoteModalOpen(true)
+    window.addEventListener("open-quote-modal", handler)
+    return () => window.removeEventListener("open-quote-modal", handler)
   }, [checkAuth])
 
   const handleLeadSubmit = async (e: React.FormEvent) => {
@@ -120,7 +126,7 @@ export default function App() {
     formData.append("phone", leadPhone)
     formData.append("projectType", leadProjectType)
     formData.append("serviceType", leadServiceType)
-    formData.append("budget", leadBudget)
+    formData.append("budget", leadBudget === "Other (Specify Below)" ? leadCustomBudget || "Not Specified" : leadBudget)
     formData.append("message", leadMessage)
     if (leadAttachment) {
       formData.append("attachment", leadAttachment)
@@ -134,6 +140,8 @@ export default function App() {
       setLeadName("")
       setLeadEmail("")
       setLeadPhone("")
+      setLeadBudget("< ₹10 Lakhs")
+      setLeadCustomBudget("")
       setLeadMessage("")
       setLeadAttachment(null)
       setTimeout(() => {
@@ -279,11 +287,24 @@ export default function App() {
                       onChange={(e) => setLeadBudget(e.target.value)}
                       className="w-full bg-surface border border-borderLine text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-accent"
                     >
-                      <option>₹50 Lakhs - 1.5 Cr</option>
-                      <option>₹1.5 - 2.5 Cr</option>
-                      <option>₹2.5 - 5.0 Cr</option>
-                      <option>₹5.0 Cr +</option>
+                      <option>{'< ₹10 Lakhs'}</option>
+                      <option>₹10 - 25 Lakhs</option>
+                      <option>₹25 - 50 Lakhs</option>
+                      <option>₹50 Lakhs - 1 Cr</option>
+                      <option>₹1 Cr - 2 Cr</option>
+                      <option>₹2 Cr - 5 Cr</option>
+                      <option>₹5 Cr +</option>
+                      <option>Other (Specify Below)</option>
                     </select>
+                    {leadBudget === "Other (Specify Below)" && (
+                      <input
+                        type="text"
+                        value={leadCustomBudget}
+                        onChange={(e) => setLeadCustomBudget(e.target.value)}
+                        placeholder="e.g. ₹3.5 Cr for 4BHK villa"
+                        className="w-full mt-2 bg-surface border border-borderLine text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-accent"
+                      />
+                    )}
                   </div>
                   <div>
                     <label className="text-[10px] uppercase font-bold text-mutedText tracking-wider block mb-1">Attachments (Blueprints/Photos)</label>
