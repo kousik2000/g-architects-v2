@@ -44,20 +44,28 @@ export default function Navbar({ onOpenStories, onOpenQuoteModal }: NavbarProps)
   return (
     <header
       className={`fixed top-0 left-0 w-full z-40 transition-all duration-300 ${scrolled
-        ? "py-4 px-6 md:px-12"
-        : "py-6 px-6 md:px-12"
+        ? "py-3 px-3 sm:px-6 md:px-12"
+        : "py-4 px-3 sm:px-6 md:px-12"
         }`}
     >
       <div
         className={`max-w-7xl mx-auto flex items-center justify-between rounded-architectural transition-all duration-300 ${scrolled
-          ? "glass-nav shadow-glass px-6 py-3"
+          ? "glass-nav shadow-glass px-4 sm:px-6 py-2.5"
           : "bg-transparent px-2 py-2 border-b border-transparent"
           }`}
       >
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <span className="flex items-end font-headings text-xl font-extrabold tracking-tight text-primary">
-            <img src="src\store\logo-g.png" width={20} className="mr-[3px] h-[25px]" /><span className="text-accent mb-[-7px]">.</span><span className="mb-[-7px]">ARCHITECTS</span>
+        <Link to="/" className="flex items-center gap-1.5 shrink-0">
+          <span className="flex items-end font-headings text-sm sm:text-lg md:text-xl font-extrabold tracking-tight text-primary">
+            <img src="/src/store/logov1-g.png" className="h-[35px] mr-[3px]" />
+            <span className="text-accent mb-[-4px] sm:mb-[-7px]">.</span>
+            <div className="flex flex-col">
+              <div className="flex gap-2">
+                <span className="mb-[-4px] sm:mb-[-7px] mb-[-5px]">ARCHITECTS</span>
+                <span className="text-accent mb-[-4px] sm:mb-[-7px] mb-[-5px]">&</span>
+              </div>
+              <span className="mb-[-4px] sm:mb-[-7px]">CONSULTANTS</span>
+            </div>
           </span>
         </Link>
 
@@ -136,12 +144,6 @@ export default function Navbar({ onOpenStories, onOpenQuoteModal }: NavbarProps)
             Get Quote
           </button>
 
-          <Link
-            to="/admin"
-            className="text-xs font-semibold text-mutedText hover:text-primary transition-colors py-1.5 px-2.5 border border-borderLine rounded-architectural"
-          >
-            Portal
-          </Link>
         </div>
       </div>
     </header>

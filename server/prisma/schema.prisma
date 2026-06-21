@@ -1,6 +1,6 @@
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -21,13 +21,13 @@ model User {
 model SiteSettings {
   id                     String   @id @default("global-settings")
   heroTitle              String   @default("CRAFTING SPATIAL TRANSFORMATIONS")
-  heroSubtitle           String   @default("Modern architectural studio shaping sustainable & luxurious environments.")
+  heroSubtitle           String   @default("Modern architectural studio shaping sustainable & luxurious environments.") @db.VarChar(500)
   aboutTitle             String   @default("OUR JOURNEY")
-  aboutContent           String   @default("Founded with a vision of bridging organic curves and functional geometries, G Architects has evolved from a boutique atelier to an award-winning spatial design laboratory. We reject typical box structures in favor of fluid forms, sculptural lines, and passive climate responsive architectural engineering.")
+  aboutContent           String   @default("Founded with a vision of bridging organic curves and functional geometries, G Architects has evolved from a boutique atelier to an award-winning spatial design laboratory. We reject typical box structures in favor of fluid forms, sculptural lines, and passive climate responsive architectural engineering.") @db.VarChar(2000)
   contactPhone           String   @default("+91 98765 43210")
   contactEmail           String   @default("info@garchitects.com")
-  officeAddress          String   @default("102, Design District, Sector 5, Salt Lake, Kolkata, West Bengal, India")
-  socialMedia            String   @default("{\"twitter\":\"https://twitter.com\",\"instagram\":\"https://instagram.com\",\"linkedin\":\"https://linkedin.com\"}") // JSON string
+  officeAddress          String   @default("102, Design District, Sector 5, Salt Lake, Kolkata, West Bengal, India") @db.VarChar(500)
+  socialMedia            String   @default("{\"twitter\":\"https://twitter.com\",\"instagram\":\"https://instagram.com\",\"linkedin\":\"https://linkedin.com\"}") @db.VarChar(1000)
   footerContent          String   @default("© 2026 G Architects & Developers. All rights reserved.")
   // Hero Stats (0 = hidden on website)
   yearsExperience        Int      @default(0)
@@ -38,9 +38,9 @@ model SiteSettings {
   showTeam               Boolean  @default(true)
   showFaq                Boolean  @default(true)
   // Milestones JSON array: [{year, title, desc}]
-  milestones             String   @default("[{\"year\":\"2012\",\"title\":\"Foundation of G Architects\",\"desc\":\"Atelier founded with two architects designing private flats.\"},{\"year\":\"2016\",\"title\":\"First Cantilever Villa\",\"desc\":\"Completed Villa Vista in Alibaug, gaining national architectural press features.\"},{\"year\":\"2020\",\"title\":\"Green Commercial Expansion\",\"desc\":\"Opened office to design carbon-neutral commercial buildings.\"},{\"year\":\"2026\",\"title\":\"Spatial Labs Setup\",\"desc\":\"Deploying immersive client VR visual rooms and local active tracking.\"}]")
+  milestones             String   @default("[{\"year\":\"2012\",\"title\":\"Foundation of G Architects\",\"desc\":\"Atelier founded with two architects designing private flats.\"},{\"year\":\"2016\",\"title\":\"First Cantilever Villa\",\"desc\":\"Completed Villa Vista in Alibaug, gaining national architectural press features.\"},{\"year\":\"2020\",\"title\":\"Green Commercial Expansion\",\"desc\":\"Opened office to design carbon-neutral commercial buildings.\"},{\"year\":\"2026\",\"title\":\"Spatial Labs Setup\",\"desc\":\"Deploying immersive client VR visual rooms and local active tracking.\"}]") @db.VarChar(2000)
   // Google Maps Embed URL
-  mapEmbedUrl            String   @default("https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3806.066298798695!2d78.38424667493636!3d17.456540583442546!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcb914f73b95815%3A0xc70099ce4da0b619!2sG%20Architects!5e0!3m2!1sen!2sin!4v1781966911091!5m2!1sen!2sin")
+  mapEmbedUrl            String   @default("https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3806.066298798695!2d78.38424667493636!3d17.456540583442546!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcb914f73b95815%3A0xc70099ce4da0b619!2sG%20Architects!5e0!3m2!1sen!2sin!4v1781966911091!5m2!1sen!2sin") @db.VarChar(1000)
   updatedAt              DateTime @updatedAt
 }
 
@@ -73,7 +73,7 @@ model Project {
   id               String           @id @default(uuid())
   slug             String           @unique
   title            String
-  description      String
+  description      String           @db.Text
   categoryId       String
   category         ProjectCategory  @relation(fields: [categoryId], references: [id])
   projectType      String           // "Villa", "Apartment", "Office", etc.
@@ -90,15 +90,15 @@ model Project {
   floors           Int?             @default(1)
   budgetRange      String?
   storyTitle       String?
-  storyProcess     String?
-  storyChallenge   String?
-  storySolution    String?
+  storyProcess     String?          @db.Text
+  storyChallenge   String?          @db.Text
+  storySolution    String?          @db.Text
   featured         Boolean          @default(false)
   featuredOrder    Int              @default(0)
   
   // SEO fields
   metaTitle        String?
-  metaDescription  String?
+  metaDescription  String?          @db.Text
   metaKeywords     String?
   ogImage          String?
   
@@ -138,7 +138,7 @@ model TeamMember {
   id           String   @id @default(uuid())
   name         String
   designation  String
-  bio          String
+  bio          String   @db.Text
   profileImage String
   displayOrder Int      @default(0)
   createdAt    DateTime @default(now())
@@ -149,7 +149,7 @@ model Review {
   clientName       String
   clientPhoto      String?
   rating           Int       @default(5)
-  review           String
+  review           String    @db.Text
   projectId        String?
   project          Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
   deletedAt        DateTime?
@@ -170,7 +170,7 @@ model Activity {
 model Announcement {
   id           String   @id @default(uuid())
   title        String
-  content      String
+  content      String   @db.Text
   startDate    DateTime
   endDate      DateTime
   active       Boolean  @default(true)
@@ -199,11 +199,11 @@ model ContactLead {
   projectType   String
   serviceType   String    @default("Architectural Planning")
   budget        String
-  message       String
+  message       String    @db.Text
   attachmentUrl String?
   status        String    @default("New") // "New" | "Contacted" | "Closed"
   source        String    @default("Website Form")
-  notes         String?
+  notes         String?   @db.Text
   assignedTo    String?
   followUpDate  DateTime?
   createdAt     DateTime  @default(now())
