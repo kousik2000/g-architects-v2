@@ -224,7 +224,7 @@ export const useAppStore = create<AppState>((set, get) => {
       try {
         const res = await fetch("/api/categories")
         const data = await res.json()
-        set({ categories: data })
+        set({ categories: Array.isArray(data) ? data : [] })
       } catch (e) {
         console.error(e)
       }
@@ -287,7 +287,7 @@ export const useAppStore = create<AppState>((set, get) => {
       try {
         const res = await fetch("/api/tags")
         const data = await res.json()
-        set({ tags: data })
+        set({ tags: Array.isArray(data) ? data : [] })
       } catch (e) {
         console.error(e)
       }
@@ -339,7 +339,7 @@ export const useAppStore = create<AppState>((set, get) => {
 
         const res = await fetch(`/api/projects?${params.toString()}`)
         const data = await res.json()
-        set({ projects: data, loading: false })
+        set({ projects: Array.isArray(data) ? data : [], loading: false })
       } catch (e) {
         console.error(e)
         set({ loading: false })

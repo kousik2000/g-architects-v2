@@ -57,7 +57,7 @@ export default function Navbar({ onOpenStories, onOpenQuoteModal }: NavbarProps)
         {/* Logo */}
         <Link to="/" className="flex items-center gap-1.5 shrink-0">
           <span className="flex items-end font-headings text-sm sm:text-lg md:text-xl font-extrabold tracking-tight text-primary">
-            <img src="/src/store/logov1-g.png" className="h-[35px] mr-[3px]" />
+            <img src="/logov1-g.png" className="h-[35px] mr-[3px]" />
             <span className="text-accent mb-[-4px] sm:mb-[-7px]">.</span>
             <div className="flex flex-col">
               <div className="flex gap-2">

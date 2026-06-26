@@ -9,6 +9,7 @@ import ServicesPage from "./pages/ServicesPage"
 import ProjectDetail from "./pages/ProjectDetail"
 import Login from "./pages/admin/Login"
 import AdminDashboard from "./pages/admin/AdminDashboard"
+import ConfigPage from "./pages/ConfigPage"
 import { Sparkles, X, Send } from "lucide-react"
 
 // Layout helper to conditionally render consumer Navbar & Footer
@@ -165,6 +166,7 @@ export default function App() {
           <Route path="/projects/:slug" element={<ProjectDetail />} />
           <Route path="/admin/login" element={<Login />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/config" element={<ConfigPage />} />
         </Routes>
       </MainLayout>
 

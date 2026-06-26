@@ -710,7 +710,7 @@ export default function AdminDashboard() {
           {/* Logo / Header */}
           <div className="p-6 border-b border-white/5">
             <div className="flex items-center gap-1.5 shrink-0 mb-1">
-              <img src="/src/store/logov1-g.png" className="h-[32px] object-contain mr-[2px]" />
+              <img src="/logov1-g.png" className="h-[32px] object-contain mr-[2px]" />
               <span className="text-accent text-lg font-extrabold mb-[-4px]">.</span>
               <div className="flex flex-col text-[10px] font-headings font-extrabold leading-none text-white tracking-tight">
                 <div className="flex gap-1 items-center">

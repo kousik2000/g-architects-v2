@@ -41,7 +41,7 @@ export default function Login() {
         {/* Top Header */}
         <div className="text-center mb-8 flex flex-col items-center">
           <div className="flex items-center justify-center gap-1.5 mb-4 select-none">
-            <img src="/src/store/logov1-g.png" className="h-[35px] object-contain mr-[2px]" />
+            <img src="/logov1-g.png" className="h-[35px] object-contain mr-[2px]" />
             <span className="text-accent text-xl font-extrabold mb-[-4px]">.</span>
             <div className="flex flex-col text-left text-xs font-headings font-extrabold leading-none text-primary tracking-tight">
               <div className="flex gap-1 items-center">
