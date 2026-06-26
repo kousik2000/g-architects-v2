@@ -6,8 +6,7 @@
       "use": "@vercel/node",
       "config": {
         "includeFiles": [
-          "src/replyemail.html",
-          "prisma/schema.prisma"
+          "src/replyemail.html"
         ]
       }
     }

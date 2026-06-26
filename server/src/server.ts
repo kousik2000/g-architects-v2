@@ -42,8 +42,10 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "g_architects_refre
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// Ensure uploads folder exists
-const uploadsDir = path.join(__dirname, "..", "uploads")
+// Ensure uploads folder exists — use /tmp on Vercel (read-only filesystem)
+const uploadsDir = process.env.VERCEL
+  ? path.join("/tmp", "uploads")
+  : path.join(__dirname, "..", "uploads")
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
 }
